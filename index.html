@@ -22,7 +22,12 @@
         <!-- Main View (Patient List) -->
         <div id="patient-list-view" class="main-view active">
             <header>
-                <h1><i class="fas fa-clipboard-list"></i> Ward Round List</h1>
+                <div class="title-section">
+                    <h1><i class="fas fa-clipboard-list"></i> Ward Round List</h1>
+                    <button id="theme-toggle" class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
                 <div class="header-actions">
                     <button id="sort-by-ward-btn" class="secondary-btn">
                         <i class="fas fa-sort"></i> Sort by Ward
@@ -52,6 +57,7 @@
                         <option value="all">All Tasks</option>
                         <option value="urgent">Urgent Only</option>
                         <option value="normal">Normal Only</option>
+                        <option value="in-progress">In Progress Only</option>
                         <option value="completed">Completed Only</option>
                         <option value="pending">Pending Only</option>
                     </select>
@@ -113,6 +119,7 @@
                                 <select id="task-priority">
                                     <option value="normal">Normal</option>
                                     <option value="urgent">Urgent</option>
+                                    <option value="in-progress">In Progress</option>
                                     <option value="completed">Completed</option>
                                 </select>
                                 <button type="submit" class="primary-btn">Add</button>
@@ -379,6 +386,46 @@
         const taskFilter = document.getElementById('task-filter');
         const taskSearch = document.getElementById('task-search');
         
+        // At the top of your script section, add these variables and functions
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // Function to set theme
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            // Update theme toggle icon
+            if (theme === 'dark') {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        }
+        
+        // Check for saved theme preference
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                // Use dark mode if user prefers dark mode
+                setTheme('dark');
+            } else {
+                // Default to light mode
+                setTheme('light');
+            }
+        }
+        
+        // Event listener for theme toggle
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+        });
+        
+        // Call initTheme at the bottom of your script section, before the initial render
+        initTheme();
+        
         // Render patient list
         function renderPatientList(patientsToRender = patients) {
             patientsContainer.innerHTML = '';
@@ -491,18 +538,15 @@
             document.getElementById('patient-ward').textContent = patient.ward;
             document.getElementById('patient-diagnosis').textContent = patient.diagnosis || 'Not specified';
             
-            // Render tasks
-            renderTasks(patient);
-            
-            // Render clinical notes
-            renderClinicalNotes(patient);
-            
-            // Render medical history
-            renderMedicalHistory(patient);
-            
-            // Show patient detail view
+            // Show patient detail view FIRST, then render components
             patientListView.classList.add('hidden');
+            allTasksView.classList.add('hidden');
             patientDetailView.classList.remove('hidden');
+            
+            // Now render everything with the patient
+            renderTasks(patient);
+            renderClinicalNotes(patient);
+            renderMedicalHistory(patient);
             
             // Reset to tasks tab
             document.querySelector('.tab-btn[data-tab="tasks"]').click();
@@ -510,55 +554,161 @@
         
         // Render tasks
         function renderTasks(patient) {
+            const tasksList = document.getElementById('tasks-list');
             tasksList.innerHTML = '';
             
-            if (!patient.tasks || patient.tasks.length === 0) {
-                tasksList.innerHTML = '<p class="no-tasks">No tasks yet. Add one above.</p>';
+            // Make sure we have a valid patient
+            if (!patient) {
+                tasksList.innerHTML = '<p class="no-items">No tasks available.</p>';
                 return;
             }
             
-            // Group tasks by priority
-            const urgentTasks = patient.tasks.filter(task => task.priority === 'urgent');
-            const normalTasks = patient.tasks.filter(task => task.priority === 'normal');
-            const completedTasks = patient.tasks.filter(task => task.priority === 'completed');
+            if (!patient.tasks || patient.tasks.length === 0) {
+                tasksList.innerHTML = '<p class="no-items">No tasks yet. Add a task above.</p>';
+                return;
+            }
             
-            // Render urgent tasks first, then normal, then completed
-            [...urgentTasks, ...normalTasks, ...completedTasks].forEach(task => {
-                const taskElement = document.createElement('div');
-                taskElement.className = `task-item ${task.priority}`;
-                taskElement.innerHTML = `
-                    <div class="task-content">
-                        <div class="task-checkbox" data-id="${task.id}" data-status="${task.priority}">
-                            ${task.priority === 'completed' ? 
-                                '<i class="fas fa-check-circle"></i>' : 
-                                '<i class="far fa-circle"></i>'}
+            // Group tasks by status
+            const normalTasks = patient.tasks.filter(task => 
+                task.priority === 'normal' || task.priority === 'urgent');
+            const inProgressTasks = patient.tasks.filter(task => 
+                task.priority === 'in-progress');
+            const completedTasks = patient.tasks.filter(task => 
+                task.priority === 'completed');
+            
+            // Normal Tasks Section
+            if (normalTasks.length > 0) {
+                const normalSection = document.createElement('div');
+                normalSection.className = 'task-status-section';
+                normalSection.innerHTML = `<h4><i class="fas fa-clipboard-list"></i> Pending Tasks</h4>`;
+                
+                // Sort by urgency then date
+                normalTasks.sort((a, b) => {
+                    if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+                    if (a.priority !== 'urgent' && b.priority === 'urgent') return 1;
+                    return new Date(b.date) - new Date(a.date);
+                });
+                
+                normalTasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = `task-item ${task.priority}`;
+                    taskItem.innerHTML = `
+                        <div class="task-content">
+                            <div class="task-text">${task.text}</div>
+                            <div class="task-date">${task.date}</div>
                         </div>
-                        <p class="task-text">${task.text}</p>
-                    </div>
-                    <div class="task-actions">
-                        <span class="task-date">${task.date}</span>
-                        <button class="delete-task-btn" data-id="${task.id}">×</button>
-                    </div>
-                `;
-                tasksList.appendChild(taskElement);
+                        <div class="task-actions">
+                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="normal" title="Toggle Status">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    normalSection.appendChild(taskItem);
+                });
+                
+                tasksList.appendChild(normalSection);
+            }
+            
+            // In Progress Tasks Section
+            if (inProgressTasks.length > 0) {
+                const progressSection = document.createElement('div');
+                progressSection.className = 'task-status-section';
+                progressSection.innerHTML = `<h4><i class="fas fa-spinner"></i> In Progress</h4>`;
+                
+                inProgressTasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = `task-item in-progress`;
+                    taskItem.innerHTML = `
+                        <div class="task-content">
+                            <div class="task-text">${task.text}</div>
+                            <div class="task-date">${task.progressDate || task.date}</div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="in-progress" title="Toggle Status">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    progressSection.appendChild(taskItem);
+                });
+                
+                tasksList.appendChild(progressSection);
+            }
+            
+            // Completed Tasks Section
+            if (completedTasks.length > 0) {
+                const completedSection = document.createElement('div');
+                completedSection.className = 'task-status-section';
+                completedSection.innerHTML = `<h4><i class="fas fa-check-circle"></i> Completed</h4>`;
+                
+                completedTasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = `task-item completed`;
+                    taskItem.innerHTML = `
+                        <div class="task-content">
+                            <div class="task-text">${task.text}</div>
+                            <div class="task-date">${task.completedDate || task.date}</div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="completed" title="Toggle Status">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    completedSection.appendChild(taskItem);
+                });
+                
+                tasksList.appendChild(completedSection);
+            }
+            
+            // Add event listeners for the toggle buttons
+            document.querySelectorAll('#tasks-list .toggle-task-status-btn').forEach(button => {
+                button.addEventListener('click', toggleTaskStatus);
             });
             
-            // Add event listeners to delete buttons
-            document.querySelectorAll('.delete-task-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const taskId = parseInt(this.getAttribute('data-id'));
-                    deleteTask(taskId);
-                });
+            document.querySelectorAll('#tasks-list .delete-task-btn').forEach(button => {
+                button.addEventListener('click', deleteTask);
             });
+        }
+        
+        // New function to toggle task status in a cycle
+        function toggleTaskStatus() {
+            const taskId = parseInt(this.getAttribute('data-id'));
+            const currentStatus = this.getAttribute('data-status');
+            const patient = patients.find(p => p.id === currentPatientId);
             
-            // Add event listeners to task checkboxes
-            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('click', function() {
-                    const taskId = parseInt(this.getAttribute('data-id'));
-                    const status = this.getAttribute('data-status');
-                    toggleTaskStatus(taskId, status);
-                });
-            });
+            if (!patient) return;
+            
+            const taskIndex = patient.tasks.findIndex(task => task.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Cycle through statuses: normal → in-progress → completed → normal
+            if (currentStatus === 'normal' || currentStatus === 'urgent') {
+                // Move to in-progress
+                patient.tasks[taskIndex].priority = 'in-progress';
+                patient.tasks[taskIndex].progressDate = new Date().toLocaleString();
+            } else if (currentStatus === 'in-progress') {
+                // Move to completed
+                patient.tasks[taskIndex].priority = 'completed';
+                patient.tasks[taskIndex].completedDate = new Date().toLocaleString();
+            } else if (currentStatus === 'completed') {
+                // Move back to normal
+                patient.tasks[taskIndex].priority = 'normal';
+                delete patient.tasks[taskIndex].completedDate;
+                delete patient.tasks[taskIndex].progressDate;
+            }
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            renderTasks(patient);
         }
         
         // Render clinical notes
@@ -660,35 +810,22 @@
         }
         
         // Delete task
-        function deleteTask(taskId) {
-            const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+        function deleteTask() {
+            const taskId = parseInt(this.getAttribute('data-id'));
+            const patient = patients.find(p => p.id === currentPatientId);
             
-            if (patientIndex === -1) return;
+            if (!patient) return;
             
-            patients[patientIndex].tasks = patients[patientIndex].tasks.filter(
-                task => task.id !== taskId
-            );
-            
-            localStorage.setItem('patients', JSON.stringify(patients));
-            renderTasks(patients[patientIndex]);
-        }
-        
-        // Toggle task status
-        function toggleTaskStatus(taskId, currentStatus) {
-            const patientIndex = patients.findIndex(p => p.id === currentPatientId);
-            
-            if (patientIndex === -1) return;
-            
-            const taskIndex = patients[patientIndex].tasks.findIndex(task => task.id === taskId);
-            
-            if (taskIndex === -1) return;
-            
-            // Toggle between completed and normal
-            patients[patientIndex].tasks[taskIndex].priority = 
-                currentStatus === 'completed' ? 'normal' : 'completed';
-            
-            localStorage.setItem('patients', JSON.stringify(patients));
-            renderTasks(patients[patientIndex]);
+            // Find the task index and remove it
+            const taskIndex = patient.tasks.findIndex(task => task.id === taskId);
+            if (taskIndex !== -1) {
+                // Confirm before deleting
+                if (confirm('Are you sure you want to delete this task?')) {
+                    patient.tasks.splice(taskIndex, 1);
+                    localStorage.setItem('patients', JSON.stringify(patients));
+                    renderTasks(patient);
+                }
+            }
         }
         
         // Add clinical note
@@ -907,6 +1044,7 @@
                 if (!tasksByWard[wardName]) {
                     tasksByWard[wardName] = {
                         pending: [],
+                        'in-progress': [],
                         completed: []
                     };
                 }
@@ -916,8 +1054,9 @@
                     if (filter !== 'all') {
                         if (filter === 'urgent' && task.priority !== 'urgent') return;
                         if (filter === 'normal' && task.priority !== 'normal') return;
+                        if (filter === 'in-progress' && task.priority !== 'in-progress') return;
                         if (filter === 'completed' && task.priority !== 'completed') return;
-                        if (filter === 'pending' && task.priority === 'completed') return;
+                        if (filter === 'pending' && (task.priority === 'completed' || task.priority === 'in-progress')) return;
                     }
                     
                     // Apply search term
@@ -933,9 +1072,11 @@
                         ward: patient.ward
                     };
                     
-                    // Group by completion status
+                    // Group by status
                     if (task.priority === 'completed') {
                         tasksByWard[wardName].completed.push(taskWithPatient);
+                    } else if (task.priority === 'in-progress') {
+                        tasksByWard[wardName]['in-progress'].push(taskWithPatient);
                     } else {
                         tasksByWard[wardName].pending.push(taskWithPatient);
                     }
@@ -961,10 +1102,9 @@
                 const wardGroup = document.createElement('div');
                 wardGroup.className = 'ward-group';
                 
-                // Ward header
                 const wardHeader = document.createElement('div');
                 wardHeader.className = 'ward-header';
-                wardHeader.innerHTML = `<i class="fas fa-hospital"></i> Ward ${ward}`;
+                wardHeader.innerHTML = `<i class="fas fa-hospital"></i> ${ward}`;
                 wardGroup.appendChild(wardHeader);
                 
                 // Pending tasks section
@@ -976,11 +1116,11 @@
                     const pendingHeader = document.createElement('div');
                     pendingHeader.className = 'task-section-header';
                     pendingHeader.innerHTML = `
-                        <h3><i class="fas fa-spinner"></i> Pending Tasks (${pendingTasks.length})</h3>
+                        <h3><i class="fas fa-clipboard-list"></i> Pending Tasks (${pendingTasks.length})</h3>
                     `;
                     pendingSection.appendChild(pendingHeader);
                     
-                    // Sort pending tasks: urgent first, then by date
+                    // Sort pending tasks by priority and date
                     pendingTasks.sort((a, b) => {
                         if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
                         if (a.priority !== 'urgent' && b.priority === 'urgent') return 1;
@@ -1006,10 +1146,10 @@
                                 </div>
                             </div>
                             <div class="task-actions">
-                                <button class="complete-task-btn" data-patient-id="${task.patientId}" data-task-id="${task.id}">
-                                    <i class="fas fa-check-circle"></i>
+                                <button class="toggle-task-status-btn-all" data-patient-id="${task.patientId}" data-task-id="${task.id}" data-status="normal" title="Toggle Status">
+                                    <i class="fas fa-sync-alt"></i>
                                 </button>
-                                <button class="view-patient-task-btn" data-patient-id="${task.patientId}">
+                                <button class="view-patient-task-btn" data-patient-id="${task.patientId}" title="View Patient">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -1018,6 +1158,55 @@
                     });
                     
                     wardGroup.appendChild(pendingSection);
+                }
+                
+                // In-progress tasks section
+                const inProgressTasks = tasksByWard[ward]['in-progress'];
+                if (inProgressTasks.length > 0) {
+                    const inProgressSection = document.createElement('div');
+                    inProgressSection.className = 'task-section';
+                    
+                    const inProgressHeader = document.createElement('div');
+                    inProgressHeader.className = 'task-section-header';
+                    inProgressHeader.innerHTML = `
+                        <h3><i class="fas fa-spinner"></i> In Progress (${inProgressTasks.length})</h3>
+                    `;
+                    inProgressSection.appendChild(inProgressHeader);
+                    
+                    // Sort by date
+                    inProgressTasks.sort((a, b) => new Date(b.progressDate || b.date) - new Date(a.progressDate || a.date));
+                    
+                    inProgressTasks.forEach(task => {
+                        const taskItem = document.createElement('div');
+                        taskItem.className = `task-item in-progress`;
+                        taskItem.innerHTML = `
+                            <div class="task-content">
+                                <div class="task-text">${task.text}</div>
+                                <div class="task-meta">
+                                    <span class="task-patient">
+                                        <i class="fas fa-user"></i> ${task.patientName} (${task.patientId})
+                                    </span>
+                                    <span class="task-location">
+                                        <i class="fas fa-map-marker-alt"></i> ${task.ward}
+                                    </span>
+                                    <span class="task-date">
+                                        <i class="fas fa-clock"></i> ${task.progressDate || task.date}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="toggle-task-status-btn-all" data-patient-id="${task.patientId}" data-task-id="${task.id}" data-status="in-progress" title="Toggle Status">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="view-patient-task-btn" data-patient-id="${task.patientId}" title="View Patient">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        `;
+                        inProgressSection.appendChild(taskItem);
+                    });
+                    
+                    wardGroup.appendChild(inProgressSection);
                 }
                 
                 // Completed tasks section
@@ -1055,10 +1244,10 @@
                                 </div>
                             </div>
                             <div class="task-actions">
-                                <button class="reopen-task-btn" data-patient-id="${task.patientId}" data-task-id="${task.id}">
-                                    <i class="fas fa-redo"></i>
+                                <button class="toggle-task-status-btn-all" data-patient-id="${task.patientId}" data-task-id="${task.id}" data-status="completed" title="Toggle Status">
+                                    <i class="fas fa-sync-alt"></i>
                                 </button>
-                                <button class="view-patient-task-btn" data-patient-id="${task.patientId}">
+                                <button class="view-patient-task-btn" data-patient-id="${task.patientId}" title="View Patient">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -1073,68 +1262,25 @@
             });
             
             // Add event listeners for task actions
-            document.querySelectorAll('.complete-task-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const patientId = this.getAttribute('data-patient-id');
-                    const taskId = parseInt(this.getAttribute('data-task-id'));
-                    completeTask(patientId, taskId);
-                });
-            });
-            
-            document.querySelectorAll('.reopen-task-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const patientId = this.getAttribute('data-patient-id');
-                    const taskId = parseInt(this.getAttribute('data-task-id'));
-                    reopenTask(patientId, taskId);
-                });
+            document.querySelectorAll('.toggle-task-status-btn-all').forEach(button => {
+                button.addEventListener('click', toggleTaskStatusFromAll);
             });
             
             document.querySelectorAll('.view-patient-task-btn').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     const patientId = this.getAttribute('data-patient-id');
                     showPatientDetails(patientId);
-                    
-                    // Ensure the tasks tab is active
-                    document.querySelector('.tab-btn[data-tab="tasks"]').click();
                 });
             });
-        }
-        
-        // Function to complete a task from the all tasks view
-        function completeTask(patientId, taskId) {
-            const patientIndex = patients.findIndex(p => p.id === patientId);
-            if (patientIndex === -1) return;
             
-            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
-            if (taskIndex === -1) return;
-            
-            patients[patientIndex].tasks[taskIndex].priority = 'completed';
-            patients[patientIndex].tasks[taskIndex].completedDate = new Date().toLocaleString();
-            localStorage.setItem('patients', JSON.stringify(patients));
-            
-            // Re-render the all tasks view
-            const currentFilter = taskFilter.value;
-            const searchTerm = taskSearch.value.trim();
-            renderAllTasks(currentFilter, searchTerm);
-        }
-        
-        // Function to reopen a completed task
-        function reopenTask(patientId, taskId) {
-            const patientIndex = patients.findIndex(p => p.id === patientId);
-            if (patientIndex === -1) return;
-            
-            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
-            if (taskIndex === -1) return;
-            
-            // Set to normal by default when reopening
-            patients[patientIndex].tasks[taskIndex].priority = 'normal';
-            delete patients[patientIndex].tasks[taskIndex].completedDate;
-            localStorage.setItem('patients', JSON.stringify(patients));
-            
-            // Re-render the all tasks view
-            const currentFilter = taskFilter.value;
-            const searchTerm = taskSearch.value.trim();
-            renderAllTasks(currentFilter, searchTerm);
+            document.querySelectorAll('.delete-task-all-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const patientId = this.getAttribute('data-patient-id');
+                    const taskId = parseInt(this.getAttribute('data-task-id'));
+                    deleteTaskFromAll(patientId, taskId);
+                });
+            });
         }
         
         // Event listeners
@@ -1187,11 +1333,20 @@
                 button.classList.add('active');
                 const viewId = button.getAttribute('data-view');
                 
+                // Hide patient detail view no matter which tab is clicked
+                patientDetailView.classList.add('hidden');
+                
                 if (viewId === 'patients') {
                     patientListView.classList.add('active');
+                    patientListView.classList.remove('hidden');
+                    allTasksView.classList.remove('active');
+                    allTasksView.classList.add('hidden');
                     renderPatientList();
                 } else if (viewId === 'all-tasks') {
                     allTasksView.classList.add('active');
+                    allTasksView.classList.remove('hidden');
+                    patientListView.classList.remove('active');
+                    patientListView.classList.add('hidden');
                     renderAllTasks();
                 }
             });
@@ -1209,6 +1364,71 @@
             const searchTerm = this.value.trim();
             renderAllTasks(currentFilter, searchTerm);
         });
+        
+        // Add event listeners for delete buttons in the all tasks view
+        document.querySelectorAll('.delete-task-all-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const patientId = this.getAttribute('data-patient-id');
+                const taskId = parseInt(this.getAttribute('data-task-id'));
+                deleteTaskFromAll(patientId, taskId);
+            });
+        });
+        
+        // Function to delete a task from the all tasks view
+        function deleteTaskFromAll(patientId, taskId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Confirm before deleting
+            if (confirm(`Are you sure you want to delete this task from ${patients[patientIndex].name}?`)) {
+                patients[patientIndex].tasks.splice(taskIndex, 1);
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Re-render the all tasks view
+                const currentFilter = document.getElementById('task-filter').value;
+                const searchTerm = document.getElementById('task-search').value.trim();
+                renderAllTasks(currentFilter, searchTerm);
+            }
+        }
+        
+        // Define the toggleTaskStatusFromAll function properly 
+        function toggleTaskStatusFromAll() {
+            const patientId = this.getAttribute('data-patient-id');
+            const taskId = parseInt(this.getAttribute('data-task-id'));
+            const currentStatus = this.getAttribute('data-status');
+            
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Cycle through statuses: normal → in-progress → completed → normal
+            if (currentStatus === 'normal' || currentStatus === 'urgent') {
+                // Move to in-progress
+                patients[patientIndex].tasks[taskIndex].priority = 'in-progress';
+                patients[patientIndex].tasks[taskIndex].progressDate = new Date().toLocaleString();
+            } else if (currentStatus === 'in-progress') {
+                // Move to completed
+                patients[patientIndex].tasks[taskIndex].priority = 'completed';
+                patients[patientIndex].tasks[taskIndex].completedDate = new Date().toLocaleString();
+            } else if (currentStatus === 'completed') {
+                // Move back to normal
+                patients[patientIndex].tasks[taskIndex].priority = 'normal';
+                delete patients[patientIndex].tasks[taskIndex].completedDate;
+                delete patients[patientIndex].tasks[taskIndex].progressDate;
+            }
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Re-render the all tasks view
+            const currentFilter = document.getElementById('task-filter').value;
+            const searchTerm = document.getElementById('task-search').value.trim();
+            renderAllTasks(currentFilter, searchTerm);
+        }
         
         // Initial render
         renderPatientList();

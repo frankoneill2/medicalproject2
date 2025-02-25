@@ -21,11 +21,34 @@
   --border-radius: 8px;
   --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   --card-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --bg-color: #f0f4f8;
+  --card-bg-color: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --hover-shadow: rgba(0, 0, 0, 0.12);
+}
+
+/* Dark mode theme */
+[data-theme="dark"] {
+  --primary-color: #4dabf7;
+  --primary-light: #74c0fc;
+  --primary-dark: #3792cb;
+  --secondary-color: #339af0;
+  --accent-color: #ff8787;
+  --light-color: #212529;
+  --dark-color: #ced4da;
+  --bg-color: #121212;
+  --card-bg-color: #1e1e1e;
+  --text-color: #e9ecef;
+  --text-light: #adb5bd;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --hover-shadow: rgba(0, 0, 0, 0.4);
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #f0f4f8;
+  background-color: var(--bg-color);
   color: var(--text-color);
   line-height: 1.5;
   font-size: 15px;
@@ -539,6 +562,10 @@ h3 {
   text-decoration: line-through;
 }
 
+.task-item.in-progress {
+  border-left-color: var(--warning-color);
+}
+
 .task-content {
   flex: 1;
 }
@@ -930,4 +957,119 @@ h3 {
 
 .no-tasks p {
     font-size: 16px;
+}
+
+/* Title section with theme toggle */
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Update various background and text colors */
+.patient-card, .note-form, .modal-content, .tabs, .ward-header,
+.main-tabs, .task-item, .search-container input {
+  background-color: var(--card-bg-color);
+}
+
+.ward-header, .tab-btn, .task-section-header h3 {
+  color: var(--text-color);
+}
+
+.search-container input, .form-group input, .form-group select, 
+.task-form input, .note-form textarea, #diagnosis-input, #task-input {
+  background-color: var(--card-bg-color);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.search-container input:focus, .form-group input:focus, 
+.form-group select:focus, .task-form input:focus, 
+.note-form textarea:focus, #diagnosis-input:focus, #task-input:focus {
+  border-color: var(--primary-light);
+}
+
+/* Main tab buttons */
+.main-tab-btn.active {
+  background-color: rgba(77, 171, 247, 0.1);
+}
+
+[data-theme="dark"] .main-tab-btn.active {
+  background-color: rgba(77, 171, 247, 0.2);
+}
+
+/* In-progress task styling */
+.task-item.in-progress {
+    border-left-color: var(--warning-color);
+}
+
+.progress-task-btn {
+    color: var(--warning-color);
+}
+
+/* Task status section styling */
+.task-status-section {
+    margin-bottom: 20px;
+}
+
+.task-status-section h4 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+}
+
+.task-status-section h4 i {
+    margin-right: 6px;
+    color: var(--text-light);
+}
+
+/* Task toggle button styling */
+.toggle-task-status-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    color: var(--primary-color);
+}
+
+.toggle-task-status-btn:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+.task-item.in-progress .toggle-task-status-btn {
+    color: var(--warning-color);
+}
+
+.task-item.completed .toggle-task-status-btn {
+    color: var(--success-color);
 } 
