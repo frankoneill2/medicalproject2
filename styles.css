@@ -36,12 +36,16 @@
   --secondary-color: #339af0;
   --accent-color: #ff8787;
   --light-color: #212529;
-  --dark-color: #ced4da;
+  --dark-color: #e9ecef;
+  --success-color: #40c057;
+  --warning-color: #fcc419;
+  --danger-color: #fa5252;
+  --text-color: #e9ecef;
+  --text-light: #ced4da;
   --bg-color: #121212;
   --card-bg-color: #1e1e1e;
-  --text-color: #e9ecef;
-  --text-light: #adb5bd;
-  --border-color: rgba(255, 255, 255, 0.1);
+  --input-bg-color: #2c2c2c;
+  --border-color: rgba(255, 255, 255, 0.15);
   --shadow-color: rgba(0, 0, 0, 0.3);
   --hover-shadow: rgba(0, 0, 0, 0.4);
 }
@@ -752,53 +756,104 @@ h3 {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+  
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    margin-top: 15px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .patient-card {
+    padding: 15px;
+  }
+  
+  .patient-info {
+    flex-direction: column;
+  }
+  
+  .patient-name {
+    font-size: 18px;
+  }
+  
+  .patient-meta {
+    margin-top: 10px;
+  }
+  
   .patient-basic-info {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+  
+  .info-group {
+    margin-bottom: 10px;
+  }
+  
+  .task-item {
+    flex-direction: column;
+  }
+  
+  .task-actions {
+    margin-top: 10px;
+    align-self: flex-end;
+  }
+  
+  /* Larger touch targets on mobile */
+  .toggle-task-status-btn, 
+  .toggle-task-status-btn-all,
+  .delete-task-btn,
+  .view-patient-task-btn {
+    padding: 8px;
+    margin: 0 2px;
+  }
+  
+  /* Tab buttons for mobile */
+  .tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 5px;
+  }
+  
+  .tab-btn {
+    padding: 8px 15px;
+  }
+  
+  /* Main tabs for mobile */
+  .main-tabs {
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  .main-tab-btn {
+    flex: 1;
+    padding: 10px 5px;
+  }
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+  .title-section h1 {
+    font-size: 20px;
   }
   
   .detail-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
   }
   
   .patient-actions {
-    width: 100%;
-    justify-content: space-between;
+    margin-top: 10px;
+    align-self: flex-end;
   }
   
-  .tab-btn {
-    padding: 10px 15px;
-    font-size: 14px;
-  }
-  
-  .form-row {
-    flex-direction: column;
-    gap: 0;
-  }
-}
-
-@media (max-width: 576px) {
-  header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .header-actions {
-    width: 100%;
-  }
-  
-  .header-actions button {
-    flex: 1;
-  }
-  
-  .search-container {
-    width: 100%;
-  }
-  
-  .patient-info {
-    grid-template-columns: 1fr;
+  .patient-info-container {
+    padding: 10px;
   }
 }
 
@@ -1050,26 +1105,139 @@ h3 {
     color: var(--text-light);
 }
 
-/* Task toggle button styling */
-.toggle-task-status-btn {
+/* Improved task toggle button styling */
+.toggle-task-status-btn, .toggle-task-status-btn-all {
+    position: relative;
     background: none;
     border: none;
     font-size: 18px;
     cursor: pointer;
-    opacity: 0.7;
-    transition: all 0.2s ease;
+    opacity: 0.8;
+    transition: all 0.3s ease;
     color: var(--primary-color);
+    padding: 5px;
+    border-radius: 4px;
 }
 
-.toggle-task-status-btn:hover {
-    opacity: 1;
+/* Make only the icon rotate, not the entire button */
+.toggle-task-status-btn i, .toggle-task-status-btn-all i {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.toggle-task-status-btn:hover i, .toggle-task-status-btn-all:hover i {
     transform: rotate(90deg);
 }
 
-.task-item.in-progress .toggle-task-status-btn {
+/* Keep the button background effect */
+.toggle-task-status-btn:hover, .toggle-task-status-btn-all:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Keep tooltip separate from rotation */
+.toggle-task-status-btn::after, .toggle-task-status-btn-all::after {
+    content: attr(data-next-state);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.toggle-task-status-btn:hover::after, .toggle-task-status-btn-all:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-10px);
+}
+
+/* Different colors based on current state */
+.task-item.in-progress .toggle-task-status-btn, 
+.task-item.in-progress .toggle-task-status-btn-all {
     color: var(--warning-color);
 }
 
-.task-item.completed .toggle-task-status-btn {
+.task-item.completed .toggle-task-status-btn,
+.task-item.completed .toggle-task-status-btn-all {
     color: var(--success-color);
+}
+
+/* Improved form elements in dark mode */
+[data-theme="dark"] .search-container input, 
+[data-theme="dark"] .form-group input, 
+[data-theme="dark"] .form-group select, 
+[data-theme="dark"] .task-form input, 
+[data-theme="dark"] .note-form textarea, 
+[data-theme="dark"] #diagnosis-input, 
+[data-theme="dark"] #task-input {
+    background-color: var(--input-bg-color);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+/* Focus states for dark mode */
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.25);
+}
+
+/* Confirmation Dialog */
+.confirm-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.confirm-dialog-content {
+    background-color: var(--card-bg-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.confirm-dialog h3 {
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.confirm-dialog p {
+    margin-bottom: 20px;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Focus visible improvements for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 } 

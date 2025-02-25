@@ -20,18 +20,15 @@
         </div>
         
         <!-- Main View (Patient List) -->
-        <div id="patient-list-view" class="main-view active">
+        <div id="patient-list-view" class="main-view active" role="region" aria-label="Patient list">
             <header>
                 <div class="title-section">
                     <h1><i class="fas fa-clipboard-list"></i> Ward Round List</h1>
-                    <button id="theme-toggle" class="theme-toggle">
-                        <i class="fas fa-moon"></i>
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
                     </button>
                 </div>
                 <div class="header-actions">
-                    <button id="sort-by-ward-btn" class="secondary-btn">
-                        <i class="fas fa-sort"></i> Sort by Ward
-                    </button>
                     <button id="add-patient-btn" class="primary-btn">
                         <i class="fas fa-user-plus"></i> Add Patient
                     </button>
@@ -49,7 +46,7 @@
         </div>
         
         <!-- All Tasks View -->
-        <div id="all-tasks-view" class="main-view">
+        <div id="all-tasks-view" class="main-view" role="region" aria-label="All tasks">
             <header>
                 <h1><i class="fas fa-tasks"></i> All Tasks</h1>
                 <div class="header-actions">
@@ -75,7 +72,7 @@
         </div>
         
         <!-- Patient Detail View (Hidden initially) -->
-        <div id="patient-detail-view" class="hidden">
+        <div id="patient-detail-view" class="hidden" role="region" aria-label="Patient details">
             <header class="detail-header">
                 <button id="back-to-list-btn" class="secondary-btn">
                     <i class="fas fa-arrow-left"></i> Back to List
@@ -357,7 +354,6 @@
         const patientsContainer = document.getElementById('patients-container');
         const patientSearch = document.getElementById('patient-search');
         const addPatientBtn = document.getElementById('add-patient-btn');
-        const sortByWardBtn = document.getElementById('sort-by-ward-btn');
         const backToListBtn = document.getElementById('back-to-list-btn');
         const editPatientBtn = document.getElementById('edit-patient-btn');
         const deletePatientBtn = document.getElementById('delete-patient-btn');
@@ -426,101 +422,130 @@
         // Call initTheme at the bottom of your script section, before the initial render
         initTheme();
         
-        // Render patient list
-        function renderPatientList(patientsToRender = patients) {
-            patientsContainer.innerHTML = '';
+        // Add this function to create patient cards
+        function createPatientCard(patient) {
+            const patientCard = document.createElement('div');
+            patientCard.className = 'patient-card';
             
-            if (patientsToRender.length === 0) {
-                patientsContainer.innerHTML = '<p class="no-patients">No patients found. Add a new patient to get started.</p>';
-                return;
+            // Count tasks by priority
+            const taskCounts = {
+                normal: 0,
+                urgent: 0,
+                'in-progress': 0,
+                completed: 0
+            };
+            
+            if (patient.tasks) {
+                patient.tasks.forEach(task => {
+                    if (taskCounts.hasOwnProperty(task.priority)) {
+                        taskCounts[task.priority]++;
+                    }
+                });
             }
             
+            patientCard.innerHTML = `
+                <div class="patient-card-content">
+                    <div class="patient-header">
+                        <h3 class="patient-name">${patient.name}</h3>
+                    </div>
+                    <div class="patient-info">
+                        <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
+                        <p><span class="info-label">Age/Gender:</span> ${patient.age}/${patient.gender}</p>
+                        <p><span class="info-label">Location:</span> ${patient.ward}</p>
+                        <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
+                    </div>
+                    <div class="diagnosis-badge">${patient.diagnosis || 'No diagnosis'}</div>
+                    <div class="patient-footer">
+                        <div class="task-indicators">
+                            ${taskCounts.urgent > 0 ? 
+                            `<div class="task-indicator">
+                                <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
+                            </div>` : ''}
+                            ${taskCounts.normal > 0 ? 
+                            `<div class="task-indicator">
+                                <span class="task-count normal">${taskCounts.normal}</span> Tasks
+                            </div>` : ''}
+                            ${taskCounts['in-progress'] > 0 ? 
+                            `<div class="task-indicator">
+                                <span class="task-count in-progress">${taskCounts['in-progress']}</span> In Progress
+                            </div>` : ''}
+                            ${taskCounts.completed > 0 ? 
+                            `<div class="task-indicator">
+                                <span class="task-count completed">${taskCounts.completed}</span> Done
+                            </div>` : ''}
+                        </div>
+                        <button class="view-patient-btn" data-id="${patient.id}">View Details</button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener to view button
+            patientCard.querySelector('.view-patient-btn').addEventListener('click', function() {
+                const patientId = this.getAttribute('data-id');
+                showPatientDetails(patientId);
+            });
+            
+            return patientCard;
+        }
+        
+        // Render patient list
+        function renderPatientList(searchTerm = '') {
             // Group patients by ward
             const patientsByWard = {};
-            patientsToRender.forEach(patient => {
-                const wardName = patient.ward.split('/')[0]; // Extract ward part before the bed number
+            
+            patients.forEach(patient => {
+                // Extract the ward name without "Ward " prefix if it exists
+                let wardName = patient.ward.split('/')[0];
+                
+                // Remove "Ward " prefix if it exists
+                wardName = wardName.replace(/^Ward\s+/i, '');
+                
                 if (!patientsByWard[wardName]) {
                     patientsByWard[wardName] = [];
                 }
                 patientsByWard[wardName].push(patient);
             });
             
-            // Sort the wards alphabetically
-            const sortedWards = Object.keys(patientsByWard).sort();
+            // Clear the container
+            patientsContainer.innerHTML = '';
             
-            // Create ward groups with patients
-            sortedWards.forEach(ward => {
+            // Create and display wards
+            Object.keys(patientsByWard).sort().forEach(ward => {
+                const wardPatients = patientsByWard[ward];
+                
+                // Filter patients if search term is provided
+                const filteredPatients = searchTerm 
+                    ? wardPatients.filter(patient => 
+                        patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        patient.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()))
+                    : wardPatients;
+                    
+                if (filteredPatients.length === 0) return;
+                
                 const wardGroup = document.createElement('div');
                 wardGroup.className = 'ward-group';
                 
                 const wardHeader = document.createElement('div');
                 wardHeader.className = 'ward-header';
-                wardHeader.innerHTML = `<i class="fas fa-hospital"></i> Ward ${ward}`;
+                wardHeader.innerHTML = `<i class="fas fa-hospital"></i> ${ward}`;
+                
                 wardGroup.appendChild(wardHeader);
                 
-                patientsByWard[ward].forEach(patient => {
-                    const patientCard = document.createElement('div');
-                    patientCard.className = 'patient-card';
-                    
-                    // Count tasks by priority
-                    const taskCounts = {
-                        normal: 0,
-                        urgent: 0,
-                        completed: 0
-                    };
-                    
-                    if (patient.tasks) {
-                        patient.tasks.forEach(task => {
-                            if (taskCounts.hasOwnProperty(task.priority)) {
-                                taskCounts[task.priority]++;
-                            }
-                        });
-                    }
-                    
-                    patientCard.innerHTML = `
-                        <div class="patient-card-content">
-                            <div class="patient-header">
-                                <h3 class="patient-name">${patient.name}</h3>
-                            </div>
-                            <div class="patient-info">
-                                <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
-                                <p><span class="info-label">Age/Gender:</span> ${patient.age}/${patient.gender}</p>
-                                <p><span class="info-label">Location:</span> ${patient.ward}</p>
-                                <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
-                            </div>
-                            <div class="diagnosis-badge">${patient.diagnosis || 'No diagnosis'}</div>
-                            <div class="patient-footer">
-                                <div class="task-indicators">
-                                    ${taskCounts.urgent > 0 ? 
-                                    `<div class="task-indicator">
-                                        <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
-                                    </div>` : ''}
-                                    ${taskCounts.normal > 0 ? 
-                                    `<div class="task-indicator">
-                                        <span class="task-count normal">${taskCounts.normal}</span> Tasks
-                                    </div>` : ''}
-                                    ${taskCounts.completed > 0 ? 
-                                    `<div class="task-indicator">
-                                        <span class="task-count completed">${taskCounts.completed}</span> Done
-                                    </div>` : ''}
-                                </div>
-                                <button class="view-patient-btn" data-id="${patient.id}">View Details</button>
-                            </div>
-                        </div>
-                    `;
+                // Add patients for this ward
+                filteredPatients.forEach(patient => {
+                    // Create patient card
+                    const patientCard = createPatientCard(patient);
                     wardGroup.appendChild(patientCard);
                 });
                 
                 patientsContainer.appendChild(wardGroup);
             });
             
-            // Add event listeners to view buttons
-            document.querySelectorAll('.view-patient-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const patientId = this.getAttribute('data-id');
-                    showPatientDetails(patientId);
-                });
-            });
+            // Show message if no patients found
+            if (patientsContainer.children.length === 0) {
+                patientsContainer.innerHTML = '<p class="no-items">No patients found. Add a patient or adjust your search.</p>';
+            }
         }
         
         // Show patient details
@@ -598,7 +623,7 @@
                             <div class="task-date">${task.date}</div>
                         </div>
                         <div class="task-actions">
-                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="normal" title="Toggle Status">
+                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="normal" data-next-state="Mark In Progress" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                             <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
@@ -627,7 +652,7 @@
                             <div class="task-date">${task.progressDate || task.date}</div>
                         </div>
                         <div class="task-actions">
-                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="in-progress" title="Toggle Status">
+                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="in-progress" data-next-state="Mark Complete" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                             <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
@@ -656,7 +681,7 @@
                             <div class="task-date">${task.completedDate || task.date}</div>
                         </div>
                         <div class="task-actions">
-                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="completed" title="Toggle Status">
+                            <button class="toggle-task-status-btn" data-id="${task.id}" data-status="completed" data-next-state="Reopen Task" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                             <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
@@ -985,17 +1010,35 @@
         
         // Delete patient
         function deletePatient() {
-            if (!confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
-                return;
-            }
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'confirm-dialog';
+            confirmDialog.innerHTML = `
+                <div class="confirm-dialog-content">
+                    <h3>Delete Patient</h3>
+                    <p>Are you sure you want to delete this patient and all their data? This action cannot be undone.</p>
+                    <div class="confirm-dialog-actions">
+                        <button class="secondary-btn" id="cancel-delete">Cancel</button>
+                        <button class="danger-btn" id="confirm-delete">Delete</button>
+                    </div>
+                </div>
+            `;
             
-            patients = patients.filter(p => p.id !== currentPatientId);
-            localStorage.setItem('patients', JSON.stringify(patients));
+            document.body.appendChild(confirmDialog);
             
-            // Go back to patient list
-            patientDetailView.classList.add('hidden');
-            patientListView.classList.remove('hidden');
-            renderPatientList();
+            document.getElementById('cancel-delete').addEventListener('click', () => {
+                document.body.removeChild(confirmDialog);
+            });
+            
+            document.getElementById('confirm-delete').addEventListener('click', () => {
+                // Actual deletion logic
+                patients = patients.filter(p => p.id !== currentPatientId);
+                localStorage.setItem('patients', JSON.stringify(patients));
+                document.body.removeChild(confirmDialog);
+                
+                patientDetailView.classList.add('hidden');
+                patientListView.classList.remove('hidden');
+                renderPatientList();
+            });
         }
         
         // Search patients
@@ -1015,17 +1058,6 @@
             );
             
             renderPatientList(filteredPatients);
-        }
-        
-        // Sort patients by ward
-        function sortPatientsByWard() {
-            const sortedPatients = [...patients].sort((a, b) => {
-                if (a.ward < b.ward) return -1;
-                if (a.ward > b.ward) return 1;
-                return 0;
-            });
-            
-            renderPatientList(sortedPatients);
         }
         
         // Function to render all tasks
@@ -1285,7 +1317,6 @@
         
         // Event listeners
         addPatientBtn.addEventListener('click', showAddPatientModal);
-        sortByWardBtn.addEventListener('click', sortPatientsByWard);
         backToListBtn.addEventListener('click', () => {
             patientDetailView.classList.add('hidden');
             patientListView.classList.remove('hidden');
