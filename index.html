@@ -205,6 +205,30 @@
             </div>
         </div>
     </div>
+    
+    <!-- Edit Task Modal (Hidden initially) -->
+    <div id="task-edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-task-modal">&times;</span>
+            <h2>Edit Task</h2>
+            <form id="edit-task-form">
+                <div class="form-group">
+                    <label for="edit-task-text">Task Description</label>
+                    <input type="text" id="edit-task-text" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-priority">Priority</label>
+                    <select id="edit-task-priority" required>
+                        <option value="normal">Normal</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <button type="submit" class="primary-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
 
     <script>
         // Data structure
@@ -373,6 +397,14 @@
         const medicalHistoryList = document.getElementById('medical-history-list');
         const tabButtons = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Task Edit Modal Elements
+        const taskEditModal = document.getElementById('task-edit-modal');
+        const closeTaskModal = document.querySelector('.close-task-modal');
+        const editTaskForm = document.getElementById('edit-task-form');
+        const editTaskText = document.getElementById('edit-task-text');
+        const editTaskPriority = document.getElementById('edit-task-priority');
+        let currentEditingTaskId = null;
         
         // Get main tab elements
         const mainTabButtons = document.querySelectorAll('.main-tab-btn');
@@ -623,6 +655,9 @@
                             <div class="task-date">${task.date}</div>
                         </div>
                         <div class="task-actions">
+                            <button class="edit-task-btn" data-id="${task.id}" title="Edit Task">
+                                <i class="fas fa-edit"></i>
+                            </button>
                             <button class="toggle-task-status-btn" data-id="${task.id}" data-status="normal" data-next-state="Mark In Progress" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
@@ -652,6 +687,9 @@
                             <div class="task-date">${task.progressDate || task.date}</div>
                         </div>
                         <div class="task-actions">
+                            <button class="edit-task-btn" data-id="${task.id}" title="Edit Task">
+                                <i class="fas fa-edit"></i>
+                            </button>
                             <button class="toggle-task-status-btn" data-id="${task.id}" data-status="in-progress" data-next-state="Mark Complete" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
@@ -681,6 +719,9 @@
                             <div class="task-date">${task.completedDate || task.date}</div>
                         </div>
                         <div class="task-actions">
+                            <button class="edit-task-btn" data-id="${task.id}" title="Edit Task">
+                                <i class="fas fa-edit"></i>
+                            </button>
                             <button class="toggle-task-status-btn" data-id="${task.id}" data-status="completed" data-next-state="Reopen Task" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
@@ -695,13 +736,20 @@
                 tasksList.appendChild(completedSection);
             }
             
-            // Add event listeners for the toggle buttons
+            // Add event listeners for the buttons
             document.querySelectorAll('#tasks-list .toggle-task-status-btn').forEach(button => {
                 button.addEventListener('click', toggleTaskStatus);
             });
             
             document.querySelectorAll('#tasks-list .delete-task-btn').forEach(button => {
                 button.addEventListener('click', deleteTask);
+            });
+            
+            document.querySelectorAll('#tasks-list .edit-task-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-id'));
+                    showEditTaskModal(taskId);
+                });
             });
         }
         
@@ -1043,21 +1091,8 @@
         
         // Search patients
         function searchPatients() {
-            const searchTerm = patientSearch.value.toLowerCase();
-            
-            if (!searchTerm) {
-                renderPatientList();
-                return;
-            }
-            
-            const filteredPatients = patients.filter(patient => 
-                patient.name.toLowerCase().includes(searchTerm) || 
-                patient.id.toLowerCase().includes(searchTerm) ||
-                patient.ward.toLowerCase().includes(searchTerm) ||
-                (patient.diagnosis && patient.diagnosis.toLowerCase().includes(searchTerm))
-            );
-            
-            renderPatientList(filteredPatients);
+            const searchTerm = this.value.trim().toLowerCase();
+            renderPatientList(searchTerm);
         }
         
         // Function to render all tasks
@@ -1315,6 +1350,52 @@
             });
         }
         
+        // Function to show edit task modal
+        function showEditTaskModal(taskId) {
+            currentEditingTaskId = taskId;
+            const patient = patients.find(p => p.id === currentPatientId);
+            
+            if (!patient) return;
+            
+            const task = patient.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            // Populate form fields
+            editTaskText.value = task.text;
+            editTaskPriority.value = task.priority;
+            
+            // Show the modal
+            taskEditModal.classList.remove('hidden');
+        }
+        
+        // Function to save edited task
+        function saveEditedTask(e) {
+            e.preventDefault();
+            
+            const text = editTaskText.value.trim();
+            const priority = editTaskPriority.value;
+            
+            if (text && currentPatientId && currentEditingTaskId) {
+                const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+                
+                if (patientIndex === -1) return;
+                
+                const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === currentEditingTaskId);
+                
+                if (taskIndex === -1) return;
+                
+                // Update task
+                patients[patientIndex].tasks[taskIndex].text = text;
+                patients[patientIndex].tasks[taskIndex].priority = priority;
+                
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Close modal and refresh task list
+                taskEditModal.classList.add('hidden');
+                renderTasks(patients[patientIndex]);
+            }
+        }
+        
         // Event listeners
         addPatientBtn.addEventListener('click', showAddPatientModal);
         backToListBtn.addEventListener('click', () => {
@@ -1326,8 +1407,10 @@
         editPatientBtn.addEventListener('click', showEditPatientModal);
         deletePatientBtn.addEventListener('click', deletePatient);
         closeModal.addEventListener('click', () => patientModal.classList.add('hidden'));
+        closeTaskModal.addEventListener('click', () => taskEditModal.classList.add('hidden'));
         patientForm.addEventListener('submit', savePatient);
         taskForm.addEventListener('submit', addTask);
+        editTaskForm.addEventListener('submit', saveEditedTask);
         clinicalNoteForm.addEventListener('submit', addClinicalNote);
         medicalHistoryForm.addEventListener('submit', addDiagnosis);
         patientSearch.addEventListener('input', searchPatients);
@@ -1346,10 +1429,13 @@
             });
         });
         
-        // Close modal when clicking outside
+        // Close modals when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target === patientModal) {
                 patientModal.classList.add('hidden');
+            }
+            if (e.target === taskEditModal) {
+                taskEditModal.classList.add('hidden');
             }
         });
         
