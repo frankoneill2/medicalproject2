@@ -253,13 +253,16 @@ h3 {
 
 .patient-card-content {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.patient-header {
+.patient-main-info {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  gap: 10px;
 }
 
 .patient-name {
@@ -267,8 +270,43 @@ h3 {
   font-weight: 600;
   font-size: 18px;
   margin: 0;
+  flex-grow: 1;
 }
 
+.patient-quick-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.patient-location {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.patient-id {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.patient-secondary-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patient-age-gender {
+  font-size: 13px;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+/* Legacy patient info styles for backward compatibility */
 .patient-info {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -292,26 +330,29 @@ h3 {
 .diagnosis-badge {
   background-color: #e3f2fd;
   color: #1e88e5;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 500;
   display: inline-block;
-  margin-top: 4px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .patient-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .task-indicators {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .task-indicator {
@@ -321,6 +362,31 @@ h3 {
   color: var(--text-light);
 }
 
+/* Compact mobile indicators */
+.urgent-indicator::after {
+  content: "U";
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.normal-indicator::after {
+  content: "T";
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.progress-indicator::after {
+  content: "P";
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.completed-indicator::after {
+  content: "C";
+  font-size: 10px;
+  margin-left: 2px;
+}
+
 .task-count {
   display: inline-flex;
   align-items: center;
@@ -328,7 +394,6 @@ h3 {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  margin-right: 5px;
   font-weight: 500;
   font-size: 12px;
   color: white;
@@ -350,16 +415,24 @@ h3 {
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   transition: all 0.2s ease;
   font-weight: 500;
+  min-width: 70px;
+  text-align: center;
 }
 
 .view-patient-btn:hover {
   background-color: var(--primary-dark);
+}
+
+@media (max-width: 480px) {
+  .view-patient-btn {
+    padding: 10px 16px; /* Larger touch target for mobile */
+  }
 }
 
 .no-patients {
@@ -986,8 +1059,13 @@ h3 {
     justify-content: space-between;
   }
   
+  /* Mobile patient card improvements */
   .patient-card {
-    padding: 15px;
+    margin-bottom: 8px;
+  }
+  
+  .patient-card-content {
+    padding: 12px;
   }
   
   .patient-info {
@@ -995,7 +1073,28 @@ h3 {
   }
   
   .patient-name {
-    font-size: 18px;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  
+  .patient-secondary-info {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .diagnosis-badge {
+    max-width: 150px;
+  }
+  
+  /* More condensed task indicators for mobile */
+  .task-indicators {
+    gap: 5px;
+  }
+  
+  .task-count {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
   }
   
   .patient-meta {

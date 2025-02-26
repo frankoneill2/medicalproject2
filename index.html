@@ -531,36 +531,37 @@
             
             patientCard.innerHTML = `
                 <div class="patient-card-content">
-                    <div class="patient-header">
+                    <div class="patient-main-info">
                         <h3 class="patient-name">${patient.name}</h3>
+                        <div class="patient-quick-info">
+                            <span class="patient-location">${patient.ward || ''}</span>
+                            <span class="patient-id">${patient.id}</span>
+                        </div>
                     </div>
-                    <div class="patient-info">
-                        <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
-                        <p><span class="info-label">Age/Gender:</span> ${patient.age || '-'}/${patient.gender || '-'}</p>
-                        <p><span class="info-label">Location:</span> ${patient.ward || 'Not specified'}</p>
-                        <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
+                    <div class="patient-secondary-info">
+                        <div class="diagnosis-badge">${primaryDiagnosis}</div>
+                        <div class="patient-age-gender">${patient.age || '-'}/${patient.gender || '-'}</div>
                     </div>
-                    <div class="diagnosis-badge">${primaryDiagnosis}</div>
                     <div class="patient-footer">
                         <div class="task-indicators">
                             ${taskCounts.urgent > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
+                            `<div class="task-indicator urgent-indicator">
+                                <span class="task-count urgent">${taskCounts.urgent}</span>
                             </div>` : ''}
                             ${taskCounts.normal > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count normal">${taskCounts.normal}</span> Tasks
+                            `<div class="task-indicator normal-indicator">
+                                <span class="task-count normal">${taskCounts.normal}</span>
                             </div>` : ''}
                             ${taskCounts['in-progress'] > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count in-progress">${taskCounts['in-progress']}</span> In Progress
+                            `<div class="task-indicator progress-indicator">
+                                <span class="task-count in-progress">${taskCounts['in-progress']}</span>
                             </div>` : ''}
                             ${taskCounts.completed > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count completed">${taskCounts.completed}</span> Done
+                            `<div class="task-indicator completed-indicator">
+                                <span class="task-count completed">${taskCounts.completed}</span>
                             </div>` : ''}
                         </div>
-                        <button class="view-patient-btn" data-id="${patient.id}">View Details</button>
+                        <button class="view-patient-btn" data-id="${patient.id}">View</button>
                     </div>
                 </div>
             `;
@@ -617,6 +618,44 @@
                 wardHeader.innerHTML = `<i class="fas fa-hospital"></i> ${ward}`;
                 
                 wardGroup.appendChild(wardHeader);
+                
+                // Sort patients by bed number within the ward
+                filteredPatients.sort((a, b) => {
+                    // Handle empty ward fields
+                    const aWard = a.ward || '';
+                    const bWard = b.ward || '';
+                    
+                    // Function to extract bed number from ward string
+                    const extractBedNumber = (wardString) => {
+                        // Common formats: "B4/12", "Ward B4 Bed 12", "4-12", etc.
+                        
+                        // Try to find bed number after a slash (most common format like B4/12)
+                        const slashMatch = wardString.match(/\/(\d+)/);
+                        if (slashMatch) return parseInt(slashMatch[1]);
+                        
+                        // Try to find bed number after "bed" or "bay" (like "Ward B4 Bed 12")
+                        const bedMatch = wardString.match(/bed\s+(\d+)/i);
+                        if (bedMatch) return parseInt(bedMatch[1]);
+                        
+                        // Try to find bed number after a dash (like "4-12")
+                        const dashMatch = wardString.match(/-(\d+)/);
+                        if (dashMatch) return parseInt(dashMatch[1]);
+                        
+                        // If all else fails, just find any number at the end
+                        const endMatch = wardString.match(/(\d+)$/);
+                        if (endMatch) return parseInt(endMatch[1]);
+                        
+                        // No bed number found
+                        return Infinity;
+                    };
+                    
+                    // Get bed numbers
+                    const aBed = extractBedNumber(aWard);
+                    const bBed = extractBedNumber(bWard);
+                    
+                    // Sort by bed number, putting patients without bed numbers at the end
+                    return aBed - bBed;
+                });
                 
                 // Add patients for this ward
                 filteredPatients.forEach(patient => {
