@@ -532,6 +532,99 @@ h3 {
   min-height: 80px;
 }
 
+/* Task form expandable section */
+.task-form-expandable {
+  display: none;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.task-form-expandable.expanded {
+  display: block;
+  opacity: 1;
+  height: auto;
+  animation: slideDown 0.3s ease forwards;
+}
+
+.task-form-toggle {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.toggle-details-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.toggle-details-btn:hover {
+  background-color: rgba(41, 171, 226, 0.1);
+}
+
+.toggle-details-btn i {
+  transition: transform 0.3s ease;
+}
+
+.toggle-details-btn.active i {
+  transform: rotate(-180deg);
+}
+
+.task-form-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.priority-select-container {
+  flex: 1;
+  margin-right: 10px;
+  margin-bottom: 0;
+}
+
+#task-description-input {
+  min-height: 60px;
+  font-size: 14px;
+}
+
+.task-add-form input,
+.task-add-form textarea,
+.task-add-form select {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color);
+  color: var(--text-color);
+  transition: all 0.2s ease;
+}
+
+.task-add-form input:focus,
+.task-add-form textarea:focus,
+.task-add-form select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(45, 109, 164, 0.1);
+  outline: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .tasks-list, .notes-list, .diagnosis-list {
   display: flex;
   flex-direction: column;
@@ -577,6 +670,14 @@ h3 {
 .task-text {
   margin-bottom: 4px;
   font-weight: 500;
+}
+
+.task-description {
+  font-size: 13px;
+  color: var(--text-color);
+  margin-bottom: 5px;
+  line-height: 1.4;
+  opacity: 0.9;
 }
 
 .task-date {
@@ -731,7 +832,7 @@ h3 {
   overflow-y: auto;
 }
 
-.close-modal {
+.close-modal, .close-task-modal {
   position: absolute;
   top: 20px;
   right: 20px;
@@ -742,7 +843,7 @@ h3 {
   line-height: 1;
 }
 
-.close-modal:hover {
+.close-modal:hover, .close-task-modal:hover {
   color: var(--danger-color);
 }
 
@@ -750,6 +851,67 @@ h3 {
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--primary-color);
+}
+
+/* Styled form */
+.styled-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-section {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius);
+  padding: 15px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.form-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+}
+
+.form-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin-left: 10px;
+}
+
+.styled-input, .styled-textarea, .styled-select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 15px;
+  transition: all 0.2s ease;
+  background-color: var(--card-bg-color);
+  color: var(--text-color);
+}
+
+.styled-input:focus, .styled-textarea:focus, .styled-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(45, 109, 164, 0.1);
+  outline: none;
+}
+
+.styled-textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 #save-patient-btn {

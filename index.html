@@ -110,16 +110,30 @@
                 <!-- Tasks Tab Content -->
                 <div id="tasks-tab" class="tab-content active">
                     <div class="note-form">
-                        <form id="task-form">
-                            <div class="form-row">
-                                <input type="text" id="task-input" placeholder="Add new task..." required>
-                                <select id="task-priority">
-                                    <option value="normal">Normal</option>
-                                    <option value="urgent">Urgent</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                                <button type="submit" class="primary-btn">Add</button>
+                        <form id="task-form" class="task-add-form">
+                            <div class="form-group">
+                                <input type="text" id="task-input" placeholder="Add new task title..." class="styled-input" required>
+                            </div>
+                            <div class="task-form-expandable" id="task-form-expandable">
+                                <div class="form-group">
+                                    <textarea id="task-description-input" placeholder="Add optional description..." rows="2" class="styled-textarea"></textarea>
+                                </div>
+                                <div class="form-row task-form-bottom">
+                                    <div class="form-group priority-select-container">
+                                        <select id="task-priority" class="styled-select">
+                                            <option value="normal">Normal</option>
+                                            <option value="urgent">Urgent</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="primary-btn">Add Task</button>
+                                </div>
+                            </div>
+                            <div class="task-form-toggle">
+                                <button type="button" id="toggle-task-details" class="toggle-details-btn">
+                                    <i class="fas fa-chevron-down"></i> <span>Add details</span>
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -211,21 +225,35 @@
         <div class="modal-content">
             <span class="close-task-modal">&times;</span>
             <h2>Edit Task</h2>
-            <form id="edit-task-form">
-                <div class="form-group">
-                    <label for="edit-task-text">Task Description</label>
-                    <input type="text" id="edit-task-text" required>
+            <form id="edit-task-form" class="styled-form">
+                <div class="form-section">
+                    <h3 class="form-section-title">Task Details</h3>
+                    <div class="form-group">
+                        <label for="edit-task-text">Title</label>
+                        <input type="text" id="edit-task-text" class="styled-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-description">Description (Optional)</label>
+                        <textarea id="edit-task-description" class="styled-textarea" rows="3" placeholder="Add detailed information about this task..."></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="edit-task-priority">Priority</label>
-                    <select id="edit-task-priority" required>
-                        <option value="normal">Normal</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Task Status</h3>
+                    <div class="form-group">
+                        <label for="edit-task-priority">Priority</label>
+                        <select id="edit-task-priority" class="styled-select" required>
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" class="primary-btn">Save Changes</button>
+                
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn">Save Changes</button>
+                </div>
             </form>
         </div>
     </div>
@@ -387,7 +415,10 @@
         const modalTitle = document.getElementById('modal-title');
         const taskForm = document.getElementById('task-form');
         const taskInput = document.getElementById('task-input');
+        const taskDescriptionInput = document.getElementById('task-description-input');
         const taskPriority = document.getElementById('task-priority');
+        const taskFormExpandable = document.getElementById('task-form-expandable');
+        const toggleTaskDetailsBtn = document.getElementById('toggle-task-details');
         const tasksList = document.getElementById('tasks-list');
         const clinicalNoteForm = document.getElementById('clinical-note-form');
         const clinicalNoteInput = document.getElementById('clinical-note-input');
@@ -403,6 +434,7 @@
         const closeTaskModal = document.querySelector('.close-task-modal');
         const editTaskForm = document.getElementById('edit-task-form');
         const editTaskText = document.getElementById('edit-task-text');
+        const editTaskDescription = document.getElementById('edit-task-description');
         const editTaskPriority = document.getElementById('edit-task-priority');
         let currentEditingTaskId = null;
         
@@ -652,6 +684,7 @@
                     taskItem.innerHTML = `
                         <div class="task-content">
                             <div class="task-text">${task.text}</div>
+                            ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                             <div class="task-date">${task.date}</div>
                         </div>
                         <div class="task-actions">
@@ -684,6 +717,7 @@
                     taskItem.innerHTML = `
                         <div class="task-content">
                             <div class="task-text">${task.text}</div>
+                            ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                             <div class="task-date">${task.progressDate || task.date}</div>
                         </div>
                         <div class="task-actions">
@@ -716,6 +750,7 @@
                     taskItem.innerHTML = `
                         <div class="task-content">
                             <div class="task-text">${task.text}</div>
+                            ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                             <div class="task-date">${task.completedDate || task.date}</div>
                         </div>
                         <div class="task-actions">
@@ -856,6 +891,7 @@
         function addTask(e) {
             e.preventDefault();
             const text = taskInput.value.trim();
+            const description = taskDescriptionInput.value.trim();
             const priority = taskPriority.value;
             
             if (text && currentPatientId) {
@@ -866,6 +902,7 @@
                 const newTask = {
                     id: Date.now(),
                     text,
+                    description,
                     priority,
                     date: new Date().toLocaleString()
                 };
@@ -876,8 +913,17 @@
                 
                 patients[patientIndex].tasks.push(newTask);
                 localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Reset form
                 taskInput.value = '';
+                taskDescriptionInput.value = '';
                 taskPriority.value = 'normal';
+                
+                // Hide the expanded section
+                if (taskFormExpandable.classList.contains('expanded')) {
+                    toggleTaskDetails();
+                }
+                
                 renderTasks(patients[patientIndex]);
             }
         }
@@ -1362,6 +1408,7 @@
             
             // Populate form fields
             editTaskText.value = task.text;
+            editTaskDescription.value = task.description || '';
             editTaskPriority.value = task.priority;
             
             // Show the modal
@@ -1373,6 +1420,7 @@
             e.preventDefault();
             
             const text = editTaskText.value.trim();
+            const description = editTaskDescription.value.trim();
             const priority = editTaskPriority.value;
             
             if (text && currentPatientId && currentEditingTaskId) {
@@ -1386,6 +1434,7 @@
                 
                 // Update task
                 patients[patientIndex].tasks[taskIndex].text = text;
+                patients[patientIndex].tasks[taskIndex].description = description;
                 patients[patientIndex].tasks[taskIndex].priority = priority;
                 
                 localStorage.setItem('patients', JSON.stringify(patients));
@@ -1393,6 +1442,19 @@
                 // Close modal and refresh task list
                 taskEditModal.classList.add('hidden');
                 renderTasks(patients[patientIndex]);
+            }
+        }
+        
+        // Toggle task details in form
+        function toggleTaskDetails() {
+            taskFormExpandable.classList.toggle('expanded');
+            toggleTaskDetailsBtn.classList.toggle('active');
+            
+            const buttonText = toggleTaskDetailsBtn.querySelector('span');
+            if (taskFormExpandable.classList.contains('expanded')) {
+                buttonText.textContent = 'Hide details';
+            } else {
+                buttonText.textContent = 'Add details';
             }
         }
         
@@ -1408,6 +1470,7 @@
         deletePatientBtn.addEventListener('click', deletePatient);
         closeModal.addEventListener('click', () => patientModal.classList.add('hidden'));
         closeTaskModal.addEventListener('click', () => taskEditModal.classList.add('hidden'));
+        toggleTaskDetailsBtn.addEventListener('click', toggleTaskDetails);
         patientForm.addEventListener('submit', savePatient);
         taskForm.addEventListener('submit', addTask);
         editTaskForm.addEventListener('submit', saveEditedTask);
