@@ -192,11 +192,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="patient-age-input">Age</label>
-                            <input type="number" id="patient-age-input" min="0" max="120" required>
+                            <input type="number" id="patient-age-input" min="0" max="120">
                         </div>
                         <div class="form-group">
                             <label for="patient-gender-input">Gender</label>
-                            <select id="patient-gender-input" required>
+                            <select id="patient-gender-input">
                                 <option value="">Select</option>
                                 <option value="M">M</option>
                                 <option value="F">F</option>
@@ -207,14 +207,14 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="patient-ward-input">Ward/Bed</label>
-                            <input type="text" id="patient-ward-input" placeholder="e.g. B4/12" required>
+                            <input type="text" id="patient-ward-input" placeholder="e.g. B4/12">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="patient-diagnoses-container">Diagnoses</label>
                         <div id="patient-diagnoses-container" class="diagnoses-container">
                             <div class="diagnosis-input-group">
-                                <input type="text" class="diagnosis-input styled-input" placeholder="Enter diagnosis" required>
+                                <input type="text" class="diagnosis-input styled-input" placeholder="Enter diagnosis">
                                 <button type="button" class="remove-diagnosis-btn"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
@@ -536,8 +536,8 @@
                     </div>
                     <div class="patient-info">
                         <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
-                        <p><span class="info-label">Age/Gender:</span> ${patient.age}/${patient.gender}</p>
-                        <p><span class="info-label">Location:</span> ${patient.ward}</p>
+                        <p><span class="info-label">Age/Gender:</span> ${patient.age || '-'}/${patient.gender || '-'}</p>
+                        <p><span class="info-label">Location:</span> ${patient.ward || 'Not specified'}</p>
                         <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
                     </div>
                     <div class="diagnosis-badge">${primaryDiagnosis}</div>
@@ -644,9 +644,9 @@
             // Update patient info
             document.getElementById('patient-name-header').textContent = patient.name;
             document.getElementById('patient-id').textContent = patient.id;
-            document.getElementById('patient-age').textContent = patient.age;
-            document.getElementById('patient-gender').textContent = patient.gender;
-            document.getElementById('patient-ward').textContent = patient.ward;
+            document.getElementById('patient-age').textContent = patient.age || 'Not specified';
+            document.getElementById('patient-gender').textContent = patient.gender || 'Not specified';
+            document.getElementById('patient-ward').textContent = patient.ward || 'Not specified';
             
             // Format diagnoses for display
             let diagnosesText = 'None';
@@ -724,6 +724,9 @@
                             </button>
                             <button class="toggle-task-status-btn" data-id="${task.id}" data-status="normal" data-next-state="Mark In Progress" title="Toggle Status">
                                 <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="complete-task-btn" data-id="${task.id}" title="Mark Complete">
+                                <i class="fas fa-check"></i>
                             </button>
                             <button class="delete-task-btn" data-id="${task.id}" title="Delete Task">
                                 <i class="fas fa-trash-alt"></i>
@@ -817,6 +820,10 @@
                     showEditTaskModal(taskId);
                 });
             });
+            
+            document.querySelectorAll('#tasks-list .complete-task-btn').forEach(button => {
+                button.addEventListener('click', markTaskComplete);
+            });
         }
         
         // New function to toggle task status in a cycle
@@ -845,6 +852,24 @@
                 delete patient.tasks[taskIndex].completedDate;
                 delete patient.tasks[taskIndex].progressDate;
             }
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            renderTasks(patient);
+        }
+        
+        // Function to mark a task as complete directly from pending
+        function markTaskComplete() {
+            const taskId = parseInt(this.getAttribute('data-id'));
+            const patient = patients.find(p => p.id === currentPatientId);
+            
+            if (!patient) return;
+            
+            const taskIndex = patient.tasks.findIndex(task => task.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Set directly to completed
+            patient.tasks[taskIndex].priority = 'completed';
+            patient.tasks[taskIndex].completedDate = new Date().toLocaleString();
             
             localStorage.setItem('patients', JSON.stringify(patients));
             renderTasks(patient);
@@ -1104,7 +1129,7 @@
             const diagnosisGroup = document.createElement('div');
             diagnosisGroup.className = 'diagnosis-input-group';
             diagnosisGroup.innerHTML = `
-                <input type="text" class="diagnosis-input styled-input" placeholder="Enter diagnosis" value="${value}" required>
+                <input type="text" class="diagnosis-input styled-input" placeholder="Enter diagnosis" value="${value}">
                 <button type="button" class="remove-diagnosis-btn"><i class="fas fa-times"></i></button>
             `;
             
@@ -1133,12 +1158,15 @@
                 }
             });
             
+            // Handle potentially empty fields
+            const ageInput = document.getElementById('patient-age-input').value;
+            
             const patientData = {
                 name: document.getElementById('patient-name-input').value,
                 id: document.getElementById('patient-id-input').value,
-                age: parseInt(document.getElementById('patient-age-input').value),
-                gender: document.getElementById('patient-gender-input').value,
-                ward: document.getElementById('patient-ward-input').value,
+                age: ageInput ? parseInt(ageInput) : '',
+                gender: document.getElementById('patient-gender-input').value || '',
+                ward: document.getElementById('patient-ward-input').value || '',
                 diagnoses: diagnoses
             };
             
@@ -1161,9 +1189,9 @@
                 // Update patient details view
                 document.getElementById('patient-name-header').textContent = patientData.name;
                 document.getElementById('patient-id').textContent = patientData.id;
-                document.getElementById('patient-age').textContent = patientData.age;
-                document.getElementById('patient-gender').textContent = patientData.gender;
-                document.getElementById('patient-ward').textContent = patientData.ward;
+                document.getElementById('patient-age').textContent = patientData.age || 'Not specified';
+                document.getElementById('patient-gender').textContent = patientData.gender || 'Not specified';
+                document.getElementById('patient-ward').textContent = patientData.ward || 'Not specified';
                 document.getElementById('patient-diagnoses').textContent = patientData.diagnoses.length > 0 ? patientData.diagnoses.join(', ') : 'None';
             } else {
                 // Add new patient
@@ -1338,6 +1366,9 @@
                                 <button class="toggle-task-status-btn-all" data-patient-id="${task.patientId}" data-task-id="${task.id}" data-status="normal" title="Toggle Status">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
+                                <button class="complete-task-btn-all" data-patient-id="${task.patientId}" data-task-id="${task.id}" title="Mark Complete">
+                                    <i class="fas fa-check"></i>
+                                </button>
                                 <button class="view-patient-task-btn" data-patient-id="${task.patientId}" title="View Patient">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -1453,6 +1484,10 @@
             // Add event listeners for task actions
             document.querySelectorAll('.toggle-task-status-btn-all').forEach(button => {
                 button.addEventListener('click', toggleTaskStatusFromAll);
+            });
+            
+            document.querySelectorAll('.complete-task-btn-all').forEach(button => {
+                button.addEventListener('click', markTaskCompleteFromAll);
             });
             
             document.querySelectorAll('.view-patient-task-btn').forEach(button => {
@@ -1692,6 +1727,29 @@
                 delete patients[patientIndex].tasks[taskIndex].completedDate;
                 delete patients[patientIndex].tasks[taskIndex].progressDate;
             }
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Re-render the all tasks view
+            const currentFilter = document.getElementById('task-filter').value;
+            const searchTerm = document.getElementById('task-search').value.trim();
+            renderAllTasks(currentFilter, searchTerm);
+        }
+        
+        // Function to mark a task as complete directly from pending in All Tasks view
+        function markTaskCompleteFromAll() {
+            const patientId = this.getAttribute('data-patient-id');
+            const taskId = parseInt(this.getAttribute('data-task-id'));
+            
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Set directly to completed
+            patients[patientIndex].tasks[taskIndex].priority = 'completed';
+            patients[patientIndex].tasks[taskIndex].completedDate = new Date().toLocaleString();
             
             localStorage.setItem('patients', JSON.stringify(patients));
             
