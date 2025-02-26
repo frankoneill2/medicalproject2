@@ -920,6 +920,55 @@ h3 {
   padding: 12px;
 }
 
+/* Multiple diagnoses */
+.diagnoses-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.diagnosis-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diagnosis-input {
+  flex: 1;
+}
+
+.remove-diagnosis-btn {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-diagnosis-btn:hover {
+  background-color: rgba(240, 62, 62, 0.1);
+}
+
+#add-diagnosis-btn {
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+#add-diagnosis-btn i {
+  font-size: 11px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .app-container {
@@ -974,8 +1023,9 @@ h3 {
   .toggle-task-status-btn, 
   .toggle-task-status-btn-all,
   .delete-task-btn,
-  .view-patient-task-btn {
-    padding: 8px;
+  .view-patient-task-btn,
+  .edit-task-btn {
+    padding: 10px;
     margin: 0 2px;
   }
   
@@ -1000,6 +1050,45 @@ h3 {
     flex: 1;
     padding: 10px 5px;
   }
+  
+  /* Patient detail view improvements for mobile */
+  .detail-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .detail-header h2 {
+    order: -1;
+    width: 100%;
+    margin: 15px 0 0 0;
+    font-size: 20px;
+  }
+  
+  #back-to-list-btn {
+    align-self: flex-start;
+  }
+  
+  .patient-actions {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0;
+  }
+  
+  .patient-actions button {
+    flex: 1;
+    margin: 0 5px;
+    font-size: 13px;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .patient-basic-info {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-bottom: 20px;
+  }
 }
 
 /* Small screens */
@@ -1008,18 +1097,47 @@ h3 {
     font-size: 20px;
   }
   
-  .detail-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .patient-actions {
-    margin-top: 10px;
-    align-self: flex-end;
-  }
-  
   .patient-info-container {
+    padding: 15px;
+  }
+  
+  .task-actions button, 
+  .edit-task-btn, 
+  .delete-task-btn, 
+  .toggle-task-status-btn {
+    padding: 8px;
+    font-size: 16px;
+  }
+  
+  .patient-actions button i {
+    margin-right: 4px;
+  }
+  
+  #patient-name-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding-bottom: 10px;
+    text-align: center;
+    font-size: 18px;
+  }
+  
+  .tabs {
+    margin-bottom: 15px;
+  }
+  
+  .tab-btn {
     padding: 10px;
+    font-size: 14px;
+  }
+  
+  /* Improve tappable area in forms */
+  .form-group label {
+    margin-bottom: 8px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 12px;
   }
 }
 
