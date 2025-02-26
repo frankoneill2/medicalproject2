@@ -206,8 +206,9 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="patient-ward-input">Ward/Bed</label>
-                            <input type="text" id="patient-ward-input" placeholder="e.g. B4/12">
+                            <label for="patient-ward-input">Location</label>
+                            <input type="text" id="patient-ward-input" placeholder="e.g. B4-3/12">
+                            <small class="form-hint">Format: Ward-Room/Bed (e.g., B4-3/12) or Ward/Bed (e.g., B4/12)</small>
                         </div>
                     </div>
                     <div class="form-group">
@@ -269,6 +270,39 @@
         let patients = JSON.parse(localStorage.getItem('patients') || '[]');
         let currentPatientId = null;
         
+        // Helper function to format location string for display
+        function formatLocation(locationString) {
+            // Common formats to handle: 
+            // - "B4/12" → "B4 • Bed 12"
+            // - "B4-3/12" → "B4 • Room 3 • Bed 12"
+            
+            if (!locationString) return 'Not specified';
+            
+            // Check for the room-bed pattern (e.g., "B4-3/12")
+            const roomBedMatch = locationString.match(/([A-Za-z0-9]+)-(\d+)\/(\d+)/);
+            if (roomBedMatch) {
+                const [_, ward, room, bed] = roomBedMatch;
+                return `${ward} • Room ${room} • Bed ${bed}`;
+            }
+            
+            // Check for the ward-bed pattern (e.g., "B4/12")
+            const wardBedMatch = locationString.match(/([A-Za-z0-9]+)\/(\d+)/);
+            if (wardBedMatch) {
+                const [_, ward, bed] = wardBedMatch;
+                return `${ward} • Bed ${bed}`;
+            }
+            
+            // Try to match explicit "Ward X Room Y Bed Z" pattern
+            const explicitMatch = locationString.match(/Ward\s+([A-Za-z0-9]+)\s+Room\s+(\d+)\s+Bed\s+(\d+)/i);
+            if (explicitMatch) {
+                const [_, ward, room, bed] = explicitMatch;
+                return `${ward} • Room ${room} • Bed ${bed}`;
+            }
+            
+            // If no pattern matches, return the original string
+            return locationString;
+        }
+        
         // If no patients exist, add sample data
         if (patients.length === 0) {
             patients = [
@@ -277,7 +311,7 @@
                     name: 'John Smith',
                     age: 67,
                     gender: 'M',
-                    ward: 'B4/12',
+                    ward: 'B4-2/12',
                     diagnoses: ['Myocardial Infarction', 'Hypertension', 'Type 2 Diabetes'],
                     tasks: [
                         {
@@ -324,7 +358,7 @@
                     name: 'Sarah Johnson',
                     age: 42,
                     gender: 'F',
-                    ward: 'A2/05',
+                    ward: 'A2-1/05',
                     diagnoses: ['Subarachnoid Hemorrhage', 'Migraine'],
                     tasks: [
                         {
@@ -360,7 +394,7 @@
                     name: 'Michael Chen',
                     age: 55,
                     gender: 'M',
-                    ward: 'C1/08',
+                    ward: 'C1-3/08',
                     diagnoses: ['Colorectal Adenocarcinoma', 'Hyperlipidemia'],
                     tasks: [
                         {
@@ -531,37 +565,36 @@
             
             patientCard.innerHTML = `
                 <div class="patient-card-content">
-                    <div class="patient-main-info">
+                    <div class="patient-header">
                         <h3 class="patient-name">${patient.name}</h3>
-                        <div class="patient-quick-info">
-                            <span class="patient-location">${patient.ward || ''}</span>
-                            <span class="patient-id">${patient.id}</span>
-                        </div>
                     </div>
-                    <div class="patient-secondary-info">
-                        <div class="diagnosis-badge">${primaryDiagnosis}</div>
-                        <div class="patient-age-gender">${patient.age || '-'}/${patient.gender || '-'}</div>
+                    <div class="patient-info">
+                        <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
+                        <p><span class="info-label">Age/Gender:</span> ${patient.age || '-'}/${patient.gender || '-'}</p>
+                        <p><span class="info-label">Location:</span> ${formatLocation(patient.ward)}</p>
+                        <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
                     </div>
+                    <div class="diagnosis-badge">${primaryDiagnosis}</div>
                     <div class="patient-footer">
                         <div class="task-indicators">
                             ${taskCounts.urgent > 0 ? 
-                            `<div class="task-indicator urgent-indicator">
-                                <span class="task-count urgent">${taskCounts.urgent}</span>
+                            `<div class="task-indicator">
+                                <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
                             </div>` : ''}
                             ${taskCounts.normal > 0 ? 
-                            `<div class="task-indicator normal-indicator">
-                                <span class="task-count normal">${taskCounts.normal}</span>
+                            `<div class="task-indicator">
+                                <span class="task-count normal">${taskCounts.normal}</span> Tasks
                             </div>` : ''}
                             ${taskCounts['in-progress'] > 0 ? 
-                            `<div class="task-indicator progress-indicator">
-                                <span class="task-count in-progress">${taskCounts['in-progress']}</span>
+                            `<div class="task-indicator">
+                                <span class="task-count in-progress">${taskCounts['in-progress']}</span> In Progress
                             </div>` : ''}
                             ${taskCounts.completed > 0 ? 
-                            `<div class="task-indicator completed-indicator">
-                                <span class="task-count completed">${taskCounts.completed}</span>
+                            `<div class="task-indicator">
+                                <span class="task-count completed">${taskCounts.completed}</span> Done
                             </div>` : ''}
                         </div>
-                        <button class="view-patient-btn" data-id="${patient.id}">View</button>
+                        <button class="view-patient-btn" data-id="${patient.id}">View Details</button>
                     </div>
                 </div>
             `;
@@ -607,6 +640,83 @@
                         patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         patient.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()))
                     : wardPatients;
+                
+                // Sort patients by room and bed number within the ward
+                filteredPatients.sort((a, b) => {
+                    // Handle empty ward fields
+                    const aLocation = a.ward || '';
+                    const bLocation = b.ward || '';
+                    
+                    // Function to parse ward/room/bed from location string
+                    const parseLocation = (locationString) => {
+                        // Initialize result object
+                        const result = {
+                            ward: '',
+                            room: 0,
+                            bed: 0
+                        };
+                        
+                        // Common formats: 
+                        // - "B4/12" (Ward B4, Bed 12)
+                        // - "B4-3/12" (Ward B4, Room 3, Bed 12)
+                        // - "Ward B4 Room 3 Bed 12"
+                        
+                        // First, extract any ward identifier (letters possibly followed by numbers)
+                        const wardMatch = locationString.match(/([A-Za-z]+\d*)/);
+                        if (wardMatch) {
+                            result.ward = wardMatch[1];
+                        }
+                        
+                        // Try to match room-bed pattern like "B4-3/12"
+                        const roomBedMatch = locationString.match(/[A-Za-z]*\d*-(\d+)\/(\d+)/);
+                        if (roomBedMatch) {
+                            result.room = parseInt(roomBedMatch[1], 10);
+                            result.bed = parseInt(roomBedMatch[2], 10);
+                            return result;
+                        }
+                        
+                        // Try to match explicit "Room X Bed Y" pattern
+                        const explicitMatch = locationString.match(/Room\s+(\d+)\s+Bed\s+(\d+)/i);
+                        if (explicitMatch) {
+                            result.room = parseInt(explicitMatch[1], 10);
+                            result.bed = parseInt(explicitMatch[2], 10);
+                            return result;
+                        }
+                        
+                        // Try to match simple ward/bed pattern like "B4/12"
+                        const simpleBedMatch = locationString.match(/\/(\d+)$/);
+                        if (simpleBedMatch) {
+                            // When only ward and bed are specified, use 0 for room sorting
+                            result.bed = parseInt(simpleBedMatch[1], 10);
+                            return result;
+                        }
+                        
+                        // Fall back to checking for any numbers as room/bed
+                        const numbers = locationString.match(/\d+/g);
+                        if (numbers && numbers.length >= 2) {
+                            // Assume last two numbers are room and bed
+                            result.room = parseInt(numbers[numbers.length - 2], 10);
+                            result.bed = parseInt(numbers[numbers.length - 1], 10);
+                        } else if (numbers && numbers.length === 1) {
+                            // Assume single number is the bed
+                            result.bed = parseInt(numbers[0], 10);
+                        }
+                        
+                        return result;
+                    };
+                    
+                    // Parse locations for both patients
+                    const aLoc = parseLocation(aLocation);
+                    const bLoc = parseLocation(bLocation);
+                    
+                    // First sort by room number
+                    if (aLoc.room !== bLoc.room) {
+                        return aLoc.room - bLoc.room;
+                    }
+                    
+                    // Then sort by bed number
+                    return aLoc.bed - bLoc.bed;
+                });
                     
                 if (filteredPatients.length === 0) return;
                 
@@ -618,44 +728,6 @@
                 wardHeader.innerHTML = `<i class="fas fa-hospital"></i> ${ward}`;
                 
                 wardGroup.appendChild(wardHeader);
-                
-                // Sort patients by bed number within the ward
-                filteredPatients.sort((a, b) => {
-                    // Handle empty ward fields
-                    const aWard = a.ward || '';
-                    const bWard = b.ward || '';
-                    
-                    // Function to extract bed number from ward string
-                    const extractBedNumber = (wardString) => {
-                        // Common formats: "B4/12", "Ward B4 Bed 12", "4-12", etc.
-                        
-                        // Try to find bed number after a slash (most common format like B4/12)
-                        const slashMatch = wardString.match(/\/(\d+)/);
-                        if (slashMatch) return parseInt(slashMatch[1]);
-                        
-                        // Try to find bed number after "bed" or "bay" (like "Ward B4 Bed 12")
-                        const bedMatch = wardString.match(/bed\s+(\d+)/i);
-                        if (bedMatch) return parseInt(bedMatch[1]);
-                        
-                        // Try to find bed number after a dash (like "4-12")
-                        const dashMatch = wardString.match(/-(\d+)/);
-                        if (dashMatch) return parseInt(dashMatch[1]);
-                        
-                        // If all else fails, just find any number at the end
-                        const endMatch = wardString.match(/(\d+)$/);
-                        if (endMatch) return parseInt(endMatch[1]);
-                        
-                        // No bed number found
-                        return Infinity;
-                    };
-                    
-                    // Get bed numbers
-                    const aBed = extractBedNumber(aWard);
-                    const bBed = extractBedNumber(bWard);
-                    
-                    // Sort by bed number, putting patients without bed numbers at the end
-                    return aBed - bBed;
-                });
                 
                 // Add patients for this ward
                 filteredPatients.forEach(patient => {
@@ -685,7 +757,7 @@
             document.getElementById('patient-id').textContent = patient.id;
             document.getElementById('patient-age').textContent = patient.age || 'Not specified';
             document.getElementById('patient-gender').textContent = patient.gender || 'Not specified';
-            document.getElementById('patient-ward').textContent = patient.ward || 'Not specified';
+            document.getElementById('patient-ward').textContent = formatLocation(patient.ward);
             
             // Format diagnoses for display
             let diagnosesText = 'None';
