@@ -177,40 +177,40 @@
                     </div>
                 </div>
                 
-                <!-- Tabs for Tasks, Notes and Medical History -->
+                <!-- Tabs for Tasks, Notes and Background -->
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="tasks">Tasks</button>
                     <button class="tab-btn" data-tab="notes">Notes</button>
-                    <button class="tab-btn" data-tab="medical-history">History</button>
+                    <button class="tab-btn" data-tab="medical-history">Background</button>
                 </div>
                 
                 <!-- Tasks Tab Content -->
                 <div id="tasks-tab" class="tab-content active">
                     <div class="note-form">
                         <form id="task-form" class="task-add-form">
-                            <div class="form-group">
-                                <input type="text" id="task-input" placeholder="Add new task title..." class="styled-input" required>
+                            <div class="form-row task-main-row">
+                                <div class="form-group task-input-container">
+                                    <input type="text" id="task-input" placeholder="Add new task title..." class="styled-input" required>
+                                </div>
+                                <div class="form-group priority-select-container">
+                                    <select id="task-priority" class="styled-select">
+                                        <option value="normal">Normal</option>
+                                        <option value="urgent">Urgent</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="primary-btn">Add Task</button>
                             </div>
-                            <div class="task-form-expandable" id="task-form-expandable">
+                            <div class="task-description-container">
                                 <div class="form-group">
                                     <textarea id="task-description-input" placeholder="Add optional description..." rows="2" class="styled-textarea"></textarea>
                                 </div>
-                                <div class="form-row task-form-bottom">
-                                    <div class="form-group priority-select-container">
-                                        <select id="task-priority" class="styled-select">
-                                            <option value="normal">Normal</option>
-                                            <option value="urgent">Urgent</option>
-                                            <option value="in-progress">In Progress</option>
-                                            <option value="completed">Completed</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="primary-btn">Add Task</button>
+                                <div class="task-form-toggle">
+                                    <button type="button" id="toggle-task-details" class="toggle-details-btn">
+                                        <i class="fas fa-chevron-down"></i> <span>Add description</span>
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="task-form-toggle">
-                                <button type="button" id="toggle-task-details" class="toggle-details-btn">
-                                    <i class="fas fa-chevron-down"></i> <span>Add details</span>
-                                </button>
                             </div>
                         </form>
                     </div>
@@ -234,17 +234,36 @@
                     </div>
                 </div>
                 
-                <!-- Medical History Tab Content -->
+                <!-- Background Tab Content -->
                 <div id="medical-history-tab" class="tab-content">
-                    <div class="note-form">
-                        <form id="medical-history-form">
-                            <input type="text" id="diagnosis-input" placeholder="Enter diagnosis...">
-                            <button type="submit" class="primary-btn">Add Diagnosis</button>
-                        </form>
+                    <!-- Diagnoses Section -->
+                    <div class="background-section">
+                        <h3 class="section-title">Diagnoses</h3>
+                        <div class="note-form">
+                            <form id="medical-history-form">
+                                <input type="text" id="diagnosis-input" placeholder="Enter diagnosis...">
+                                <button type="submit" class="primary-btn">Add Diagnosis</button>
+                            </form>
+                        </div>
+                        
+                        <div id="medical-history-list" class="diagnosis-list">
+                            <!-- Diagnoses will be added here -->
+                        </div>
                     </div>
                     
-                    <div id="medical-history-list" class="diagnosis-list">
-                        <!-- Medical history items will be added here -->
+                    <!-- Social History Section -->
+                    <div class="background-section">
+                        <h3 class="section-title">Social History</h3>
+                        <div class="note-form">
+                            <form id="social-history-form">
+                                <input type="text" id="social-history-input" placeholder="Enter social history item...">
+                                <button type="submit" class="primary-btn">Add Social History</button>
+                            </form>
+                        </div>
+                        
+                        <div id="social-history-list" class="diagnosis-list">
+                            <!-- Social history items will be added here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,6 +372,66 @@
                             <option value="in-progress">In Progress</option>
                             <option value="completed">Completed</option>
                         </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Note Modal (Hidden initially) -->
+    <div id="note-edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-note-modal">&times;</span>
+            <h2>Edit Clinical Note</h2>
+            <form id="edit-note-form" class="styled-form">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="edit-note-text">Note</label>
+                        <textarea id="edit-note-text" class="styled-textarea" rows="5" required></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Diagnosis Modal (Hidden initially) -->
+    <div id="diagnosis-edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-diagnosis-modal">&times;</span>
+            <h2>Edit Diagnosis</h2>
+            <form id="edit-diagnosis-form" class="styled-form">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="edit-diagnosis-text">Diagnosis</label>
+                        <input type="text" id="edit-diagnosis-text" class="styled-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Social History Modal (Hidden initially) -->
+    <div id="social-history-edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-social-history-modal">&times;</span>
+            <h2>Edit Social History</h2>
+            <form id="edit-social-history-form" class="styled-form">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="edit-social-history-text">Social History</label>
+                        <input type="text" id="edit-social-history-text" class="styled-input" required>
                     </div>
                 </div>
                 
@@ -1168,6 +1247,7 @@
             renderTasks(patient);
             renderClinicalNotes(patient);
             renderMedicalHistory(patient);
+            renderSocialHistory(patient);
             
             // Reset to tasks tab
             document.querySelector('.tab-btn[data-tab="tasks"]').click();
@@ -1396,7 +1476,14 @@
                 noteElement.innerHTML = `
                     <div class="note-header">
                         <span class="note-date">${note.date}</span>
-                        <button class="delete-note-btn" data-id="${note.id}">×</button>
+                        <div class="note-actions">
+                            <button class="edit-note-btn" data-id="${note.id}" title="Edit Note">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-note-btn" data-id="${note.id}" title="Delete Note">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
                     </div>
                     <p class="note-text">${note.text}</p>
                 `;
@@ -1410,6 +1497,14 @@
                     deleteClinicalNote(noteId);
                 });
             });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-note-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const noteId = parseInt(this.getAttribute('data-id'));
+                    showEditNoteModal(noteId);
+                });
+            });
         }
         
         // Render medical history
@@ -1417,7 +1512,7 @@
             medicalHistoryList.innerHTML = '';
             
             if (!patient.medicalHistory || patient.medicalHistory.length === 0) {
-                medicalHistoryList.innerHTML = '<p class="no-notes">No medical history recorded.</p>';
+                medicalHistoryList.innerHTML = '<p class="no-notes">No diagnoses recorded.</p>';
                 return;
             }
             
@@ -1428,7 +1523,12 @@
                     <div class="diagnosis-header">
                         <span class="diagnosis-text">${item.diagnosis}</span>
                         <div class="diagnosis-actions">
-                            <button class="delete-diagnosis-btn" data-id="${item.id}">×</button>
+                            <button class="edit-diagnosis-btn" data-id="${item.id}" title="Edit Diagnosis">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-diagnosis-btn" data-id="${item.id}" title="Delete Diagnosis">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1440,6 +1540,60 @@
                 button.addEventListener('click', function() {
                     const diagnosisId = parseInt(this.getAttribute('data-id'));
                     deleteDiagnosis(diagnosisId);
+                });
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-diagnosis-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const diagnosisId = parseInt(this.getAttribute('data-id'));
+                    showEditDiagnosisModal(diagnosisId);
+                });
+            });
+        }
+        
+        // Render social history
+        function renderSocialHistory(patient) {
+            const socialHistoryList = document.getElementById('social-history-list');
+            socialHistoryList.innerHTML = '';
+            
+            if (!patient.socialHistory || patient.socialHistory.length === 0) {
+                socialHistoryList.innerHTML = '<p class="no-notes">No social history recorded.</p>';
+                return;
+            }
+            
+            patient.socialHistory.forEach(item => {
+                const historyElement = document.createElement('div');
+                historyElement.className = 'social-history-item';
+                historyElement.innerHTML = `
+                    <div class="social-history-header">
+                        <span class="social-history-text">${item.text}</span>
+                        <div class="social-history-actions">
+                            <button class="edit-social-history-btn" data-id="${item.id}" title="Edit Social History">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-social-history-btn" data-id="${item.id}" title="Delete Social History">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                socialHistoryList.appendChild(historyElement);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-social-history-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const socialHistoryId = parseInt(this.getAttribute('data-id'));
+                    deleteSocialHistory(socialHistoryId);
+                });
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-social-history-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const socialHistoryId = parseInt(this.getAttribute('data-id'));
+                    showEditSocialHistoryModal(socialHistoryId);
                 });
             });
         }
@@ -1476,8 +1630,9 @@
                 taskDescriptionInput.value = '';
                 taskPriority.value = 'normal';
                 
-                // Hide the expanded section
-                if (taskFormExpandable.classList.contains('expanded')) {
+                // Hide the description if it's expanded
+                const descriptionContainer = document.querySelector('.task-description-container');
+                if (descriptionContainer.classList.contains('expanded')) {
                     toggleTaskDetails();
                 }
                 
@@ -1584,6 +1739,47 @@
             
             localStorage.setItem('patients', JSON.stringify(patients));
             renderMedicalHistory(patients[patientIndex]);
+        }
+        
+        // Add social history
+        function addSocialHistory(e) {
+            e.preventDefault();
+            const text = document.getElementById('social-history-input').value.trim();
+            
+            if (text && currentPatientId) {
+                const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+                
+                if (patientIndex === -1) return;
+                
+                const newItem = {
+                    id: Date.now(),
+                    text,
+                    date: new Date().toLocaleString()
+                };
+                
+                if (!patients[patientIndex].socialHistory) {
+                    patients[patientIndex].socialHistory = [];
+                }
+                
+                patients[patientIndex].socialHistory.push(newItem);
+                localStorage.setItem('patients', JSON.stringify(patients));
+                document.getElementById('social-history-input').value = '';
+                renderSocialHistory(patients[patientIndex]);
+            }
+        }
+        
+        // Delete social history
+        function deleteSocialHistory(socialHistoryId) {
+            const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+            
+            if (patientIndex === -1) return;
+            
+            patients[patientIndex].socialHistory = patients[patientIndex].socialHistory.filter(
+                item => item.id !== socialHistoryId
+            );
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            renderSocialHistory(patients[patientIndex]);
         }
         
         // Show add patient modal
@@ -2097,16 +2293,188 @@
             }
         }
         
-        // Toggle task details in form
+        // Function to show edit note modal
+        let currentEditingNoteId = null;
+        function showEditNoteModal(noteId) {
+            currentEditingNoteId = noteId;
+            const patient = patients.find(p => p.id === currentPatientId);
+            
+            if (!patient) return;
+            
+            const note = patient.clinicalNotes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            // Populate form fields
+            document.getElementById('edit-note-text').value = note.text;
+            
+            // Show the modal
+            document.getElementById('note-edit-modal').classList.remove('hidden');
+            
+            // Add event listeners for close button
+            document.querySelector('.close-note-modal').addEventListener('click', function() {
+                document.getElementById('note-edit-modal').classList.add('hidden');
+            });
+            
+            // Handle click outside modal
+            document.getElementById('note-edit-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Function to save edited note
+        function saveEditedNote(e) {
+            e.preventDefault();
+            
+            const text = document.getElementById('edit-note-text').value.trim();
+            
+            if (text && currentPatientId && currentEditingNoteId) {
+                const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+                
+                if (patientIndex === -1) return;
+                
+                const noteIndex = patients[patientIndex].clinicalNotes.findIndex(n => n.id === currentEditingNoteId);
+                
+                if (noteIndex === -1) return;
+                
+                // Update note
+                patients[patientIndex].clinicalNotes[noteIndex].text = text;
+                patients[patientIndex].clinicalNotes[noteIndex].editDate = new Date().toLocaleString(); // Optional: add edit date
+                
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Close modal and refresh notes list
+                document.getElementById('note-edit-modal').classList.add('hidden');
+                renderClinicalNotes(patients[patientIndex]);
+            }
+        }
+        
+        // Function to show edit diagnosis modal
+        let currentEditingDiagnosisId = null;
+        function showEditDiagnosisModal(diagnosisId) {
+            currentEditingDiagnosisId = diagnosisId;
+            const patient = patients.find(p => p.id === currentPatientId);
+            
+            if (!patient) return;
+            
+            const diagnosis = patient.medicalHistory.find(d => d.id === diagnosisId);
+            if (!diagnosis) return;
+            
+            // Populate form fields
+            document.getElementById('edit-diagnosis-text').value = diagnosis.diagnosis;
+            
+            // Show the modal
+            document.getElementById('diagnosis-edit-modal').classList.remove('hidden');
+            
+            // Add event listeners for close button
+            document.querySelector('.close-diagnosis-modal').addEventListener('click', function() {
+                document.getElementById('diagnosis-edit-modal').classList.add('hidden');
+            });
+            
+            // Handle click outside modal
+            document.getElementById('diagnosis-edit-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Function to save edited diagnosis
+        function saveEditedDiagnosis(e) {
+            e.preventDefault();
+            
+            const text = document.getElementById('edit-diagnosis-text').value.trim();
+            
+            if (text && currentPatientId && currentEditingDiagnosisId) {
+                const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+                
+                if (patientIndex === -1) return;
+                
+                const diagnosisIndex = patients[patientIndex].medicalHistory.findIndex(d => d.id === currentEditingDiagnosisId);
+                
+                if (diagnosisIndex === -1) return;
+                
+                // Update diagnosis
+                patients[patientIndex].medicalHistory[diagnosisIndex].diagnosis = text;
+                patients[patientIndex].medicalHistory[diagnosisIndex].editDate = new Date().toLocaleString(); // Optional: add edit date
+                
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Close modal and refresh diagnosis list
+                document.getElementById('diagnosis-edit-modal').classList.add('hidden');
+                renderMedicalHistory(patients[patientIndex]);
+            }
+        }
+        
+        // Function to show edit social history modal
+        let currentEditingSocialHistoryId = null;
+        function showEditSocialHistoryModal(socialHistoryId) {
+            currentEditingSocialHistoryId = socialHistoryId;
+            const patient = patients.find(p => p.id === currentPatientId);
+            
+            if (!patient) return;
+            
+            const socialHistory = patient.socialHistory.find(s => s.id === socialHistoryId);
+            if (!socialHistory) return;
+            
+            // Populate form fields
+            document.getElementById('edit-social-history-text').value = socialHistory.text;
+            
+            // Show the modal
+            document.getElementById('social-history-edit-modal').classList.remove('hidden');
+            
+            // Add event listeners for close button
+            document.querySelector('.close-social-history-modal').addEventListener('click', function() {
+                document.getElementById('social-history-edit-modal').classList.add('hidden');
+            });
+            
+            // Handle click outside modal
+            document.getElementById('social-history-edit-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Function to save edited social history
+        function saveEditedSocialHistory(e) {
+            e.preventDefault();
+            
+            const text = document.getElementById('edit-social-history-text').value.trim();
+            
+            if (text && currentPatientId && currentEditingSocialHistoryId) {
+                const patientIndex = patients.findIndex(p => p.id === currentPatientId);
+                
+                if (patientIndex === -1) return;
+                
+                const socialHistoryIndex = patients[patientIndex].socialHistory.findIndex(s => s.id === currentEditingSocialHistoryId);
+                
+                if (socialHistoryIndex === -1) return;
+                
+                // Update social history
+                patients[patientIndex].socialHistory[socialHistoryIndex].text = text;
+                patients[patientIndex].socialHistory[socialHistoryIndex].editDate = new Date().toLocaleString(); // Optional: add edit date
+                
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Close modal and refresh social history list
+                document.getElementById('social-history-edit-modal').classList.add('hidden');
+                renderSocialHistory(patients[patientIndex]);
+            }
+        }
+        
+        // Toggle task description in form
         function toggleTaskDetails() {
-            taskFormExpandable.classList.toggle('expanded');
+            const descriptionContainer = document.querySelector('.task-description-container');
+            descriptionContainer.classList.toggle('expanded');
             toggleTaskDetailsBtn.classList.toggle('active');
             
             const buttonText = toggleTaskDetailsBtn.querySelector('span');
-            if (taskFormExpandable.classList.contains('expanded')) {
-                buttonText.textContent = 'Hide details';
+            if (descriptionContainer.classList.contains('expanded')) {
+                buttonText.textContent = 'Hide description';
             } else {
-                buttonText.textContent = 'Add details';
+                buttonText.textContent = 'Add description';
             }
         }
         
@@ -2163,6 +2531,10 @@
         editTaskForm.addEventListener('submit', saveEditedTask);
         clinicalNoteForm.addEventListener('submit', addClinicalNote);
         medicalHistoryForm.addEventListener('submit', addDiagnosis);
+        document.getElementById('social-history-form').addEventListener('submit', addSocialHistory);
+        document.getElementById('edit-note-form').addEventListener('submit', saveEditedNote);
+        document.getElementById('edit-diagnosis-form').addEventListener('submit', saveEditedDiagnosis);
+        document.getElementById('edit-social-history-form').addEventListener('submit', saveEditedSocialHistory);
         patientSearch.addEventListener('input', searchPatients);
         
         // Tab switching
