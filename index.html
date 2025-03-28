@@ -1575,6 +1575,7 @@
             
             // Set location form values based on patient's location
             setLocationFormValues(patient.ward);
+            document.getElementById('patient-ward-input').value = patient.ward || '';
             
             // Clear existing diagnosis inputs except the first one
             diagnosesContainer.innerHTML = '';
@@ -2721,7 +2722,9 @@
             
             if (otherLocationToggle.checked) {
                 // Use custom location
-                wardInput.value = document.getElementById('patient-other-location').value.trim();
+                const customLocation = document.getElementById('patient-other-location').value.trim();
+                wardInput.value = customLocation;
+                console.log('Using custom location:', customLocation);
             } else {
                 // Use dropdown values
                 const ward = document.getElementById('patient-ward-select').value;
@@ -2729,8 +2732,10 @@
                 
                 if (ward && bed) {
                     wardInput.value = `${ward}/${bed}`;
+                    console.log(`Setting location to ${ward}/${bed}`);
                 } else {
                     wardInput.value = '';
+                    console.log('No ward/bed selected');
                 }
             }
         }
@@ -2998,10 +3003,34 @@
             });
             
             // Event listeners for location selection in patient form
-            document.getElementById('patient-ward-select').addEventListener('change', handleWardChange);
-            document.getElementById('other-location-toggle').addEventListener('change', toggleOtherLocation);
+            const wardSelect = document.getElementById('patient-ward-select');
+            const bedSelect = document.getElementById('patient-bed-select');
+            const otherLocationToggle = document.getElementById('other-location-toggle');
+            const otherLocationInput = document.getElementById('patient-other-location');
             
-            // Update location values before form submission
+            // Add event listener for ward selection
+            wardSelect.addEventListener('change', function() {
+                handleWardChange.call(this); // Update bed options
+                updateLocationValue(); // Update hidden field
+            });
+            
+            // Add event listener for bed selection
+            bedSelect.addEventListener('change', function() {
+                updateLocationValue(); // Update hidden field when bed changes
+            });
+            
+            // Add event listener for other location toggle
+            otherLocationToggle.addEventListener('change', function() {
+                toggleOtherLocation();
+                updateLocationValue(); // Update hidden field when toggle changes
+            });
+            
+            // Add event listener for other location input
+            otherLocationInput.addEventListener('input', function() {
+                updateLocationValue(); // Update hidden field when custom location changes
+            });
+            
+            // Update location values before form submission as a fail-safe
             document.getElementById('patient-form').addEventListener('submit', function() {
                 updateLocationValue();
             });
