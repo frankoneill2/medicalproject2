@@ -725,10 +725,26 @@
                 
                 // Filter patients if search term is provided
                 const filteredPatients = searchTerm 
-                    ? wardPatients.filter(patient => 
-                        patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        patient.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()))
+                    ? wardPatients.filter(patient => {
+                        // Check in patient name or ID
+                        if (patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            patient.id.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            return true;
+                        }
+                        
+                        // Check in diagnoses array
+                        if (patient.diagnoses && patient.diagnoses.length > 0) {
+                            return patient.diagnoses.some(diagnosis => 
+                                diagnosis.toLowerCase().includes(searchTerm.toLowerCase()));
+                        }
+                        
+                        // Backward compatibility for old data structure
+                        if (patient.diagnosis) {
+                            return patient.diagnosis.toLowerCase().includes(searchTerm.toLowerCase());
+                        }
+                        
+                        return false;
+                    })
                     : wardPatients;
                 
                 // Sort patients by room and bed number within the ward
@@ -1459,7 +1475,8 @@
             patients.forEach(patient => {
                 if (!patient.tasks || patient.tasks.length === 0) return;
                 
-                const wardName = patient.ward.split('/')[0]; // Extract ward part
+                // Handle case where patient.ward might be undefined
+                const wardName = patient.ward ? patient.ward.split('/')[0] : 'Unassigned'; // Extract ward part
                 
                 if (!tasksByWard[wardName]) {
                     tasksByWard[wardName] = {
