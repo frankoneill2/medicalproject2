@@ -99,12 +99,36 @@
                         
                         <div class="bed-management" id="bed-management">
                             <h3>Beds for Ward: <span id="selected-ward-name">None selected</span></h3>
-                            <div id="bed-list" class="list-container">
+                            <div class="bed-management-actions">
+                                <button id="sort-beds-numeric-btn" class="secondary-btn" disabled><i class="fas fa-sort-numeric-down"></i> Sort Numeric</button>
+                                <button id="sort-beds-alpha-btn" class="secondary-btn" disabled><i class="fas fa-sort-alpha-down"></i> Sort Alpha</button>
+                            </div>
+                            <div id="bed-list" class="list-container sortable">
                                 <!-- Beds will be listed here -->
                             </div>
                             <div class="add-item-form">
                                 <input type="text" id="new-bed-input" placeholder="Enter bed identifier (e.g., 1, 2, etc.)">
                                 <button id="add-bed-btn" class="primary-btn" disabled><i class="fas fa-plus"></i> Add Bed</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Ward Edit Modal -->
+                        <div id="ward-edit-modal" class="modal hidden">
+                            <div class="modal-content">
+                                <span class="close-ward-modal">&times;</span>
+                                <h2>Edit Ward</h2>
+                                <form id="edit-ward-form" class="styled-form">
+                                    <div class="form-section">
+                                        <div class="form-group">
+                                            <label for="edit-ward-name">Ward Name</label>
+                                            <input type="text" id="edit-ward-name" class="styled-input" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-actions">
+                                        <button type="submit" class="primary-btn">Save Changes</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -2021,6 +2045,9 @@
                 wardItem.innerHTML = `
                     <span class="item-name">${ward}</span>
                     <div class="item-actions">
+                        <button class="edit-ward-btn" data-ward="${ward}" title="Edit Ward Name">
+                            <i class="fas fa-edit"></i>
+                        </button>
                         <button class="edit-beds-btn" data-ward="${ward}" title="Edit Beds">
                             <i class="fas fa-bed"></i>
                         </button>
@@ -2034,6 +2061,13 @@
             });
             
             // Add event listeners
+            document.querySelectorAll('.edit-ward-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const ward = this.getAttribute('data-ward');
+                    showEditWardModal(ward);
+                });
+            });
+            
             document.querySelectorAll('.edit-beds-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const ward = this.getAttribute('data-ward');
@@ -2054,6 +2088,8 @@
             currentSelectedWard = ward;
             document.getElementById('selected-ward-name').textContent = ward;
             document.getElementById('add-bed-btn').disabled = false;
+            document.getElementById('sort-beds-numeric-btn').disabled = false;
+            document.getElementById('sort-beds-alpha-btn').disabled = false;
             renderBedList(ward);
         }
         
@@ -2070,7 +2106,9 @@
             wardBeds[ward].forEach(bed => {
                 const bedItem = document.createElement('div');
                 bedItem.className = 'list-item';
+                bedItem.setAttribute('data-bed', bed);
                 bedItem.innerHTML = `
+                    <div class="drag-handle" title="Drag to reorder"><i class="fas fa-grip-vertical"></i></div>
                     <span class="item-name">Bed ${bed}</span>
                     <div class="item-actions">
                         <button class="delete-bed-btn" data-bed="${bed}" title="Delete Bed">
@@ -2089,6 +2127,17 @@
                     deleteBed(currentSelectedWard, bed);
                 });
             });
+            
+            // Attach drag and drop events to enable reordering
+            if (typeof bedSorting !== 'undefined' && bedSorting.attachDragEvents) {
+                bedSorting.attachDragEvents();
+            }
+            
+            // Add tooltip to explain drag-and-drop
+            const dragHint = document.createElement('div');
+            dragHint.className = 'drag-hint';
+            dragHint.innerHTML = '<i class="fas fa-info-circle"></i> Drag and drop to reorder beds, or use the sort buttons.';
+            bedList.parentNode.insertBefore(dragHint, bedList.nextSibling);
         }
         
         // Add a new ward
@@ -2318,14 +2367,224 @@
             wardInput.value = locationString;
         }
         
+        // Initialize drag-and-drop for bed reordering
+        function initBedSorting() {
+            const bedList = document.getElementById('bed-list');
+            let dragSrcEl = null;
+            
+            function handleDragStart(e) {
+                this.style.opacity = '0.4';
+                dragSrcEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.innerHTML);
+            }
+            
+            function handleDragOver(e) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            }
+            
+            function handleDragEnter() {
+                this.classList.add('over');
+            }
+            
+            function handleDragLeave() {
+                this.classList.remove('over');
+            }
+            
+            function handleDrop(e) {
+                if (e.stopPropagation) {
+                    e.stopPropagation();
+                }
+                
+                if (dragSrcEl !== this) {
+                    // Get the bed identifiers
+                    const draggedBedId = dragSrcEl.getAttribute('data-bed');
+                    const targetBedId = this.getAttribute('data-bed');
+                    
+                    // Get their positions in the array
+                    const beds = wardBeds[currentSelectedWard];
+                    const fromIndex = beds.indexOf(draggedBedId);
+                    const toIndex = beds.indexOf(targetBedId);
+                    
+                    // Reorder the array
+                    if (fromIndex !== -1 && toIndex !== -1) {
+                        // Remove the item from its original position
+                        const [item] = beds.splice(fromIndex, 1);
+                        // Insert it at the new position
+                        beds.splice(toIndex, 0, item);
+                        
+                        // Save to localStorage
+                        localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+                        
+                        // Re-render the list
+                        renderBedList(currentSelectedWard);
+                        updateWardSelectors();
+                    }
+                }
+                
+                return false;
+            }
+            
+            function handleDragEnd() {
+                this.style.opacity = '1';
+                
+                document.querySelectorAll('.list-item').forEach(item => {
+                    item.classList.remove('over');
+                });
+            }
+            
+            function attachDragEvents() {
+                const items = document.querySelectorAll('#bed-list .list-item');
+                items.forEach(item => {
+                    item.setAttribute('draggable', 'true');
+                    item.addEventListener('dragstart', handleDragStart, false);
+                    item.addEventListener('dragenter', handleDragEnter, false);
+                    item.addEventListener('dragover', handleDragOver, false);
+                    item.addEventListener('dragleave', handleDragLeave, false);
+                    item.addEventListener('drop', handleDrop, false);
+                    item.addEventListener('dragend', handleDragEnd, false);
+                });
+            }
+            
+            return { attachDragEvents };
+        }
+        
+        // Function to show the ward edit modal
+        function showEditWardModal(ward) {
+            const wardEditModal = document.getElementById('ward-edit-modal');
+            const editWardNameInput = document.getElementById('edit-ward-name');
+            
+            // Set the current ward name
+            editWardNameInput.value = ward;
+            editWardNameInput.setAttribute('data-original-ward', ward);
+            
+            // Show the modal
+            wardEditModal.classList.remove('hidden');
+        }
+        
+        // Function to save edited ward name
+        function saveEditedWard(e) {
+            e.preventDefault();
+            
+            const editWardNameInput = document.getElementById('edit-ward-name');
+            const newWardName = editWardNameInput.value.trim();
+            const originalWard = editWardNameInput.getAttribute('data-original-ward');
+            
+            if (newWardName && originalWard && newWardName !== originalWard) {
+                // Check if the new name already exists
+                if (wards.includes(newWardName)) {
+                    alert(`Ward "${newWardName}" already exists. Please choose a different name.`);
+                    return;
+                }
+                
+                // Update ward name in the wards array
+                const wardIndex = wards.indexOf(originalWard);
+                if (wardIndex !== -1) {
+                    wards[wardIndex] = newWardName;
+                }
+                
+                // Update beds for this ward
+                if (wardBeds[originalWard]) {
+                    wardBeds[newWardName] = [...wardBeds[originalWard]];
+                    delete wardBeds[originalWard];
+                }
+                
+                // Update patients with this ward
+                patients.forEach(patient => {
+                    if (patient.ward && patient.ward.startsWith(originalWard + '/')) {
+                        patient.ward = patient.ward.replace(originalWard + '/', newWardName + '/');
+                    } else if (patient.ward === originalWard) {
+                        patient.ward = newWardName;
+                    }
+                });
+                
+                // Save changes
+                localStorage.setItem('wards', JSON.stringify(wards));
+                localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Update UI
+                if (currentSelectedWard === originalWard) {
+                    currentSelectedWard = newWardName;
+                    document.getElementById('selected-ward-name').textContent = newWardName;
+                }
+                
+                renderWardList();
+                updateWardSelectors();
+                
+                // Close the modal
+                document.getElementById('ward-edit-modal').classList.add('hidden');
+            }
+        }
+        
+        // Sort beds numerically function
+        function sortBedsNumeric() {
+            if (!currentSelectedWard) return;
+            
+            wardBeds[currentSelectedWard].sort((a, b) => {
+                const numA = parseInt(a, 10);
+                const numB = parseInt(b, 10);
+                
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return numA - numB;
+                }
+                
+                return a.localeCompare(b);
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+            
+            // Re-render
+            renderBedList(currentSelectedWard);
+            updateWardSelectors();
+        }
+        
+        // Sort beds alphabetically function
+        function sortBedsAlpha() {
+            if (!currentSelectedWard) return;
+            
+            wardBeds[currentSelectedWard].sort((a, b) => a.localeCompare(b));
+            
+            // Save to localStorage
+            localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+            
+            // Re-render
+            renderBedList(currentSelectedWard);
+            updateWardSelectors();
+        }
+        
         // Initialize settings and location management
         function initLocationSettings() {
             // Initialize ward and bed data
             initializeWardsIfEmpty();
             
+            // Initialize the bed sorting functionality
+            const bedSorting = initBedSorting();
+            
             // Event listeners for settings page
             document.getElementById('add-ward-btn').addEventListener('click', addWard);
             document.getElementById('add-bed-btn').addEventListener('click', addBed);
+            document.getElementById('sort-beds-numeric-btn').addEventListener('click', sortBedsNumeric);
+            document.getElementById('sort-beds-alpha-btn').addEventListener('click', sortBedsAlpha);
+            
+            // Ward edit modal
+            document.getElementById('edit-ward-form').addEventListener('submit', saveEditedWard);
+            document.querySelector('.close-ward-modal').addEventListener('click', function() {
+                document.getElementById('ward-edit-modal').classList.add('hidden');
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                const wardEditModal = document.getElementById('ward-edit-modal');
+                if (e.target === wardEditModal) {
+                    wardEditModal.classList.add('hidden');
+                }
+            });
             
             // Event listeners for location selection in patient form
             document.getElementById('patient-ward-select').addEventListener('change', handleWardChange);
@@ -2344,6 +2603,9 @@
             document.querySelector('.main-tab-btn[data-view="settings"]').addEventListener('click', function() {
                 renderWardList();
             });
+            
+            // Export the bed sorting functionality so it can be used in renderBedList
+            return { bedSorting };
         }
         
         // Settings view
@@ -2353,7 +2615,7 @@
         renderPatientList();
         
         // Initialize ward and bed settings
-        initLocationSettings();
+        const { bedSorting } = initLocationSettings();
     </script>
 </body>
 </html> 
