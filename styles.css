@@ -330,16 +330,47 @@ h3 {
 
 .patient-quick-add-task {
   margin: 8px 0;
+  position: relative;
+}
+
+.quick-task-toggle-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  margin-left: auto;
+  margin-right: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.quick-task-toggle-btn:hover {
+  background-color: var(--primary-dark);
+  transform: scale(1.05);
 }
 
 .quick-task-form {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: white;
   border-radius: 4px;
-  padding: 5px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 5px;
+  animation: fadeIn 0.2s ease;
+}
+
+.quick-task-form.hidden {
+  display: none;
 }
 
 .quick-task-input {
@@ -372,7 +403,8 @@ h3 {
   background-color: white;
 }
 
-.quick-task-add-btn {
+.quick-task-add-btn,
+.quick-task-cancel-btn {
   background-color: var(--primary-color);
   color: white;
   border: none;
@@ -387,8 +419,22 @@ h3 {
   transition: background-color 0.2s;
 }
 
+.quick-task-add-btn {
+  background-color: var(--success-color);
+}
+
+.quick-task-cancel-btn {
+  background-color: var(--text-light);
+}
+
 .quick-task-add-btn:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--success-color);
+  filter: brightness(1.1);
+}
+
+.quick-task-cancel-btn:hover {
+  background-color: var(--text-light);
+  filter: brightness(1.1);
 }
 
 .patient-tasks-list {
@@ -1310,8 +1356,14 @@ h3 {
     margin: 10px 0;
   }
   
+  .quick-task-toggle-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
   .quick-task-form {
-    padding: 8px;
+    padding: 10px;
   }
   
   .quick-task-input {
@@ -1324,7 +1376,8 @@ h3 {
     font-size: 14px;
   }
   
-  .quick-task-add-btn {
+  .quick-task-add-btn,
+  .quick-task-cancel-btn {
     width: 32px;
     height: 32px;
     font-size: 14px;

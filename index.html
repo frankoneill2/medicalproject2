@@ -711,7 +711,10 @@
                             </div>
                         </div>
                         <div class="patient-quick-add-task">
-                            <form class="quick-task-form" data-patient-id="${patient.id}">
+                            <button class="quick-task-toggle-btn" data-patient-id="${patient.id}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <form class="quick-task-form hidden" data-patient-id="${patient.id}">
                                 <input type="text" class="quick-task-input" placeholder="Add new task..." required>
                                 <div class="quick-task-actions">
                                     <select class="quick-task-priority">
@@ -719,7 +722,10 @@
                                         <option value="urgent">Urgent</option>
                                     </select>
                                     <button type="submit" class="quick-task-add-btn">
-                                        <i class="fas fa-plus"></i>
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" class="quick-task-cancel-btn">
+                                        <i class="fas fa-times"></i>
                                     </button>
                                 </div>
                             </form>
@@ -883,9 +889,21 @@
                     });
                 });
                 
-                // Add event listener for the quick task form
+                // Add event listener for the quick task toggle button
+                const quickTaskToggleBtn = patientCard.querySelector('.quick-task-toggle-btn');
                 const quickTaskForm = patientCard.querySelector('.quick-task-form');
-                if (quickTaskForm) {
+                
+                if (quickTaskToggleBtn && quickTaskForm) {
+                    // Show form when toggle button is clicked
+                    quickTaskToggleBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        quickTaskForm.classList.remove('hidden');
+                        quickTaskForm.querySelector('.quick-task-input').focus();
+                        this.classList.add('hidden');
+                    });
+                    
+                    // Handle form submission
                     quickTaskForm.addEventListener('submit', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -897,8 +915,23 @@
                         if (taskText) {
                             addTaskFromCard(patientId, taskText, taskPriority);
                             this.querySelector('.quick-task-input').value = '';
+                            this.classList.add('hidden');
+                            quickTaskToggleBtn.classList.remove('hidden');
                         }
                     });
+                    
+                    // Handle cancel button click
+                    const cancelBtn = quickTaskForm.querySelector('.quick-task-cancel-btn');
+                    if (cancelBtn) {
+                        cancelBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            quickTaskForm.classList.add('hidden');
+                            quickTaskForm.querySelector('.quick-task-input').value = '';
+                            quickTaskToggleBtn.classList.remove('hidden');
+                        });
+                    }
                 }
             }
             
