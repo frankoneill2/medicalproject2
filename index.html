@@ -762,20 +762,18 @@
                         <div class="compact-task-content">
                             <span class="compact-task-text">${task.text}</span>
                             <div class="compact-task-actions">
-                                ${task.priority !== 'completed' ? 
+                                ${task.priority === 'normal' || task.priority === 'urgent' ? 
                                     `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
                                         <i class="fas fa-check"></i>
-                                    </button>` : ''
-                                }
-                                ${task.priority !== 'in-progress' && task.priority !== 'completed' ? 
-                                    `<button class="compact-task-progress-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark In Progress">
+                                    </button>
+                                    <button class="compact-task-progress-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark In Progress">
                                         <i class="fas fa-spinner"></i>
-                                    </button>` : ''
-                                }
-                                ${task.priority === 'in-progress' ? 
+                                    </button>` : 
+                                 task.priority === 'in-progress' ?
                                     `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
                                         <i class="fas fa-check"></i>
-                                    </button>` : ''
+                                    </button>` :
+                                    ''
                                 }
                                 ${task.priority === 'completed' ? 
                                     `<button class="compact-task-reopen-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Reopen Task">
@@ -814,20 +812,18 @@
                             <div class="compact-task-content">
                                 <span class="compact-task-text">${task.text}</span>
                                 <div class="compact-task-actions">
-                                    ${task.priority !== 'completed' ? 
+                                    ${task.priority === 'normal' || task.priority === 'urgent' ? 
                                         `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
                                             <i class="fas fa-check"></i>
-                                        </button>` : ''
-                                    }
-                                    ${task.priority !== 'in-progress' && task.priority !== 'completed' ? 
-                                        `<button class="compact-task-progress-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark In Progress">
+                                        </button>
+                                        <button class="compact-task-progress-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark In Progress">
                                             <i class="fas fa-spinner"></i>
-                                        </button>` : ''
-                                    }
-                                    ${task.priority === 'in-progress' ? 
+                                        </button>` : 
+                                     task.priority === 'in-progress' ?
                                         `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
                                             <i class="fas fa-check"></i>
-                                        </button>` : ''
+                                        </button>` :
+                                        ''
                                     }
                                     ${task.priority === 'completed' ? 
                                         `<button class="compact-task-reopen-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Reopen Task">
