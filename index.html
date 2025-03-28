@@ -366,6 +366,7 @@
             // Common formats to handle: 
             // - "B4/12" → "B4 • Bed 12"
             // - "B4-3/12" → "B4 • Room 3 • Bed 12"
+            // - "B4" → "Ward B4"
             
             if (!locationString) return 'Not specified';
             
@@ -388,6 +389,12 @@
             if (explicitMatch) {
                 const [_, ward, room, bed] = explicitMatch;
                 return `${ward} • Room ${room} • Bed ${bed}`;
+            }
+            
+            // Check if the string is just a ward identifier (e.g., "B4")
+            // No slashes or dashes should be present for simple ward
+            if (/^[A-Za-z0-9]+$/.test(locationString) && !locationString.includes('/') && !locationString.includes('-')) {
+                return `Ward ${locationString}`;
             }
             
             // If no pattern matches, return the original string
@@ -951,8 +958,30 @@
             const patientsByWard = {};
             
             patients.forEach(patient => {
-                // Extract the ward name without "Ward " prefix if it exists
-                let wardName = patient.ward.split('/')[0];
+                if (!patient.ward) {
+                    // If no ward, place in 'Unassigned' group
+                    if (!patientsByWard['Unassigned']) {
+                        patientsByWard['Unassigned'] = [];
+                    }
+                    patientsByWard['Unassigned'].push(patient);
+                    return;
+                }
+                
+                // Extract the ward name from location string
+                let wardName;
+                
+                // For ward/bed format (e.g., "B4/12")
+                if (patient.ward.includes('/')) {
+                    wardName = patient.ward.split('/')[0];
+                } 
+                // For ward-room-bed format (e.g., "B4-3/12")
+                else if (patient.ward.includes('-')) {
+                    wardName = patient.ward.split('-')[0];
+                }
+                // For simple ward name (e.g., "B4")
+                else {
+                    wardName = patient.ward;
+                }
                 
                 // Remove "Ward " prefix if it exists
                 wardName = wardName.replace(/^Ward\s+/i, '');
@@ -2730,12 +2759,19 @@
                 const ward = document.getElementById('patient-ward-select').value;
                 const bed = document.getElementById('patient-bed-select').value;
                 
-                if (ward && bed) {
-                    wardInput.value = `${ward}/${bed}`;
-                    console.log(`Setting location to ${ward}/${bed}`);
+                if (ward) {
+                    if (bed) {
+                        // Both ward and bed are selected
+                        wardInput.value = `${ward}/${bed}`;
+                        console.log(`Setting location to ${ward}/${bed}`);
+                    } else {
+                        // Only ward is selected
+                        wardInput.value = ward;
+                        console.log(`Setting location to ward ${ward} without specific bed`);
+                    }
                 } else {
                     wardInput.value = '';
-                    console.log('No ward/bed selected');
+                    console.log('No ward selected');
                 }
             }
         }
@@ -2772,6 +2808,17 @@
                         bedSelect.value = bed;
                         return;
                     }
+                }
+            } else if (/^[A-Za-z0-9]+$/.test(locationString)) {
+                // Check if location is just a ward name (simple string, no slashes or special chars)
+                const ward = locationString;
+                
+                // Check if the ward exists in our list
+                if (wards.includes(ward)) {
+                    wardSelect.value = ward;
+                    updateBedSelectors(ward);
+                    bedSelect.value = ''; // No bed selected
+                    return;
                 }
             }
             
