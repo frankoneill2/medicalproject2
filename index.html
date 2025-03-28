@@ -17,6 +17,9 @@
             <button class="main-tab-btn" data-view="all-tasks">
                 <i class="fas fa-tasks"></i> All Tasks
             </button>
+            <button class="main-tab-btn" data-view="settings">
+                <i class="fas fa-cog"></i> Settings
+            </button>
         </div>
         
         <!-- Main View (Patient List) -->
@@ -68,6 +71,44 @@
             
             <div id="all-tasks-container">
                 <!-- Tasks will be listed here -->
+            </div>
+        </div>
+        
+        <!-- Settings View -->
+        <div id="settings-view" class="main-view" role="region" aria-label="Settings">
+            <header>
+                <h1><i class="fas fa-cog"></i> Settings</h1>
+            </header>
+            
+            <div class="settings-container">
+                <div class="settings-section">
+                    <h2><i class="fas fa-hospital"></i> Ward Management</h2>
+                    <p class="settings-description">Manage the list of wards available for patient assignment.</p>
+                    
+                    <div class="ward-management">
+                        <div class="ward-list-container">
+                            <h3>Available Wards</h3>
+                            <div id="ward-list" class="list-container">
+                                <!-- Wards will be listed here -->
+                            </div>
+                            <div class="add-item-form">
+                                <input type="text" id="new-ward-input" placeholder="Enter ward name (e.g., A1)">
+                                <button id="add-ward-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Ward</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bed-management" id="bed-management">
+                            <h3>Beds for Ward: <span id="selected-ward-name">None selected</span></h3>
+                            <div id="bed-list" class="list-container">
+                                <!-- Beds will be listed here -->
+                            </div>
+                            <div class="add-item-form">
+                                <input type="text" id="new-bed-input" placeholder="Enter bed identifier (e.g., 1, 2, etc.)">
+                                <button id="add-bed-btn" class="primary-btn" disabled><i class="fas fa-plus"></i> Add Bed</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -206,9 +247,29 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="patient-ward-input">Location</label>
-                            <input type="text" id="patient-ward-input" placeholder="e.g. B4-3/12">
-                            <small class="form-hint">Format: Ward-Room/Bed (e.g., B4-3/12) or Ward/Bed (e.g., B4/12)</small>
+                            <label for="patient-location">Location</label>
+                            <div class="location-selector">
+                                <div class="location-select-group">
+                                    <select id="patient-ward-select" class="styled-select">
+                                        <option value="">Select Ward</option>
+                                        <!-- Ward options will be dynamically added -->
+                                    </select>
+                                    <select id="patient-bed-select" class="styled-select" disabled>
+                                        <option value="">Select Bed</option>
+                                        <!-- Bed options will be dynamically added -->
+                                    </select>
+                                </div>
+                                <div class="other-location-container" style="display: none;">
+                                    <input type="text" id="patient-other-location" placeholder="Enter custom location">
+                                </div>
+                                <div class="location-toggle">
+                                    <label class="other-location-checkbox">
+                                        <input type="checkbox" id="other-location-toggle">
+                                        <span>Use other location</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <input type="hidden" id="patient-ward-input">
                         </div>
                     </div>
                     <div class="form-group">
@@ -269,6 +330,11 @@
         // Data structure
         let patients = JSON.parse(localStorage.getItem('patients') || '[]');
         let currentPatientId = null;
+        
+        // Ward and Bed management
+        let wards = JSON.parse(localStorage.getItem('wards') || '[]');
+        let wardBeds = JSON.parse(localStorage.getItem('wardBeds') || '{}');
+        let currentSelectedWard = null;
         
         // Helper function to format location string for display
         function formatLocation(locationString) {
@@ -1214,7 +1280,9 @@
             document.getElementById('patient-id-input').value = patient.id;
             document.getElementById('patient-age-input').value = patient.age;
             document.getElementById('patient-gender-input').value = patient.gender;
-            document.getElementById('patient-ward-input').value = patient.ward;
+            
+            // Set location form values based on patient's location
+            setLocationFormValues(patient.ward);
             
             // Clear existing diagnosis inputs except the first one
             diagnosesContainer.innerHTML = '';
@@ -1685,6 +1753,20 @@
             modalTitle.textContent = 'Add New Patient';
             patientForm.reset();
             
+            // Initialize location selector to default (dropdown mode)
+            const otherLocationToggle = document.getElementById('other-location-toggle');
+            otherLocationToggle.checked = false;
+            toggleOtherLocation();
+            
+            // Update bed selector based on first ward
+            if (wards.length > 0) {
+                const wardSelect = document.getElementById('patient-ward-select');
+                if (wardSelect.options.length > 1) {
+                    wardSelect.selectedIndex = 1; // Select first ward
+                    updateBedSelectors(wardSelect.value);
+                }
+            }
+            
             // Clear any existing diagnosis inputs
             diagnosesContainer.innerHTML = '';
             
@@ -1758,13 +1840,25 @@
                     patientListView.classList.remove('hidden');
                     allTasksView.classList.remove('active');
                     allTasksView.classList.add('hidden');
+                    settingsView.classList.remove('active');
+                    settingsView.classList.add('hidden');
                     renderPatientList();
                 } else if (viewId === 'all-tasks') {
                     allTasksView.classList.add('active');
                     allTasksView.classList.remove('hidden');
                     patientListView.classList.remove('active');
                     patientListView.classList.add('hidden');
+                    settingsView.classList.remove('active');
+                    settingsView.classList.add('hidden');
                     renderAllTasks();
+                } else if (viewId === 'settings') {
+                    settingsView.classList.add('active');
+                    settingsView.classList.remove('hidden');
+                    patientListView.classList.remove('active');
+                    patientListView.classList.add('hidden');
+                    allTasksView.classList.remove('active');
+                    allTasksView.classList.add('hidden');
+                    renderWardList();
                 }
             });
         });
@@ -1870,8 +1964,396 @@
             renderAllTasks(currentFilter, searchTerm);
         }
         
+        // Ward and Bed management functions
+        
+        // Initialize wards with default values if empty
+        function initializeWardsIfEmpty() {
+            if (wards.length === 0) {
+                // Add default wards based on existing patient data
+                const existingWards = new Set();
+                
+                patients.forEach(patient => {
+                    if (patient.ward) {
+                        const wardMatch = patient.ward.match(/([A-Za-z0-9]+)[-\/]/);
+                        if (wardMatch && wardMatch[1]) {
+                            existingWards.add(wardMatch[1]);
+                        }
+                    }
+                });
+                
+                // Add extracted wards
+                wards = Array.from(existingWards);
+                
+                // Add some default wards if none were found
+                if (wards.length === 0) {
+                    wards = ['A1', 'B2', 'C3', 'D4'];
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('wards', JSON.stringify(wards));
+            }
+            
+            // Initialize beds for each ward if not already done
+            wards.forEach(ward => {
+                if (!wardBeds[ward]) {
+                    // Default 20 beds per ward (numbers 1-20)
+                    wardBeds[ward] = Array.from({length: 20}, (_, i) => (i + 1).toString());
+                }
+            });
+            
+            // Save wardBeds to localStorage
+            localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+        }
+        
+        // Render the ward list in settings
+        function renderWardList() {
+            const wardList = document.getElementById('ward-list');
+            wardList.innerHTML = '';
+            
+            if (wards.length === 0) {
+                wardList.innerHTML = '<p class="no-items">No wards added yet. Add a ward above.</p>';
+                return;
+            }
+            
+            wards.forEach(ward => {
+                const wardItem = document.createElement('div');
+                wardItem.className = 'list-item';
+                wardItem.innerHTML = `
+                    <span class="item-name">${ward}</span>
+                    <div class="item-actions">
+                        <button class="edit-beds-btn" data-ward="${ward}" title="Edit Beds">
+                            <i class="fas fa-bed"></i>
+                        </button>
+                        <button class="delete-ward-btn" data-ward="${ward}" title="Delete Ward">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                
+                wardList.appendChild(wardItem);
+            });
+            
+            // Add event listeners
+            document.querySelectorAll('.edit-beds-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const ward = this.getAttribute('data-ward');
+                    selectWardForBedManagement(ward);
+                });
+            });
+            
+            document.querySelectorAll('.delete-ward-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const ward = this.getAttribute('data-ward');
+                    deleteWard(ward);
+                });
+            });
+        }
+        
+        // Select ward for bed management
+        function selectWardForBedManagement(ward) {
+            currentSelectedWard = ward;
+            document.getElementById('selected-ward-name').textContent = ward;
+            document.getElementById('add-bed-btn').disabled = false;
+            renderBedList(ward);
+        }
+        
+        // Render bed list for a specific ward
+        function renderBedList(ward) {
+            const bedList = document.getElementById('bed-list');
+            bedList.innerHTML = '';
+            
+            if (!wardBeds[ward] || wardBeds[ward].length === 0) {
+                bedList.innerHTML = '<p class="no-items">No beds added for this ward yet. Add a bed above.</p>';
+                return;
+            }
+            
+            wardBeds[ward].forEach(bed => {
+                const bedItem = document.createElement('div');
+                bedItem.className = 'list-item';
+                bedItem.innerHTML = `
+                    <span class="item-name">Bed ${bed}</span>
+                    <div class="item-actions">
+                        <button class="delete-bed-btn" data-bed="${bed}" title="Delete Bed">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                
+                bedList.appendChild(bedItem);
+            });
+            
+            // Add event listeners for bed deletion
+            document.querySelectorAll('.delete-bed-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const bed = this.getAttribute('data-bed');
+                    deleteBed(currentSelectedWard, bed);
+                });
+            });
+        }
+        
+        // Add a new ward
+        function addWard() {
+            const newWardInput = document.getElementById('new-ward-input');
+            const wardName = newWardInput.value.trim();
+            
+            if (wardName && !wards.includes(wardName)) {
+                wards.push(wardName);
+                wardBeds[wardName] = [];
+                
+                // Save to localStorage
+                localStorage.setItem('wards', JSON.stringify(wards));
+                localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+                
+                newWardInput.value = '';
+                renderWardList();
+                updateWardSelectors();
+            }
+        }
+        
+        // Delete a ward
+        function deleteWard(ward) {
+            if (confirm(`Are you sure you want to delete ward ${ward} and all its beds?`)) {
+                // Remove the ward from the wards array
+                wards = wards.filter(w => w !== ward);
+                
+                // Remove the ward's beds
+                delete wardBeds[ward];
+                
+                // Save changes to localStorage
+                localStorage.setItem('wards', JSON.stringify(wards));
+                localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+                
+                renderWardList();
+                updateWardSelectors();
+                
+                // Clear bed management if the deleted ward was selected
+                if (currentSelectedWard === ward) {
+                    currentSelectedWard = null;
+                    document.getElementById('selected-ward-name').textContent = 'None selected';
+                    document.getElementById('add-bed-btn').disabled = true;
+                    document.getElementById('bed-list').innerHTML = '';
+                }
+            }
+        }
+        
+        // Add a new bed to the selected ward
+        function addBed() {
+            if (!currentSelectedWard) return;
+            
+            const newBedInput = document.getElementById('new-bed-input');
+            const bedIdentifier = newBedInput.value.trim();
+            
+            if (bedIdentifier && !wardBeds[currentSelectedWard].includes(bedIdentifier)) {
+                wardBeds[currentSelectedWard].push(bedIdentifier);
+                
+                // Sort beds numerically if possible
+                wardBeds[currentSelectedWard].sort((a, b) => {
+                    const numA = parseInt(a, 10);
+                    const numB = parseInt(b, 10);
+                    
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB;
+                    }
+                    
+                    return a.localeCompare(b);
+                });
+                
+                // Save to localStorage
+                localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+                
+                newBedInput.value = '';
+                renderBedList(currentSelectedWard);
+                updateWardSelectors();
+            }
+        }
+        
+        // Delete a bed from a ward
+        function deleteBed(ward, bed) {
+            if (!ward || !bed) return;
+            
+            if (confirm(`Are you sure you want to delete bed ${bed} from ward ${ward}?`)) {
+                wardBeds[ward] = wardBeds[ward].filter(b => b !== bed);
+                
+                // Save changes to localStorage
+                localStorage.setItem('wardBeds', JSON.stringify(wardBeds));
+                
+                renderBedList(ward);
+                updateWardSelectors();
+            }
+        }
+        
+        // Update ward selectors in patient forms
+        function updateWardSelectors() {
+            const wardSelect = document.getElementById('patient-ward-select');
+            
+            // Save the current selection
+            const currentValue = wardSelect.value;
+            
+            // Clear current options except the placeholder
+            while (wardSelect.options.length > 1) {
+                wardSelect.remove(1);
+            }
+            
+            // Add ward options
+            wards.forEach(ward => {
+                const option = document.createElement('option');
+                option.value = ward;
+                option.textContent = ward;
+                wardSelect.appendChild(option);
+            });
+            
+            // Restore previous selection if valid
+            if (wards.includes(currentValue)) {
+                wardSelect.value = currentValue;
+            }
+        }
+        
+        // Update bed selectors based on selected ward
+        function updateBedSelectors(ward) {
+            const bedSelect = document.getElementById('patient-bed-select');
+            
+            // Clear current options except the placeholder
+            while (bedSelect.options.length > 1) {
+                bedSelect.remove(1);
+            }
+            
+            if (!ward || !wardBeds[ward]) {
+                bedSelect.disabled = true;
+                return;
+            }
+            
+            // Add bed options for the selected ward
+            wardBeds[ward].forEach(bed => {
+                const option = document.createElement('option');
+                option.value = bed;
+                option.textContent = `Bed ${bed}`;
+                bedSelect.appendChild(option);
+            });
+            
+            bedSelect.disabled = false;
+        }
+        
+        // Toggle between dropdown and custom location input
+        function toggleOtherLocation() {
+            const isChecked = document.getElementById('other-location-toggle').checked;
+            const selectGroup = document.querySelector('.location-select-group');
+            const otherContainer = document.querySelector('.other-location-container');
+            
+            if (isChecked) {
+                selectGroup.style.display = 'none';
+                otherContainer.style.display = 'block';
+            } else {
+                selectGroup.style.display = 'flex';
+                otherContainer.style.display = 'none';
+            }
+        }
+        
+        // Function to handle ward selection change
+        function handleWardChange() {
+            const selectedWard = this.value;
+            updateBedSelectors(selectedWard);
+        }
+        
+        // Function to update the hidden input with location value
+        function updateLocationValue() {
+            const otherLocationToggle = document.getElementById('other-location-toggle');
+            const wardInput = document.getElementById('patient-ward-input');
+            
+            if (otherLocationToggle.checked) {
+                // Use custom location
+                wardInput.value = document.getElementById('patient-other-location').value.trim();
+            } else {
+                // Use dropdown values
+                const ward = document.getElementById('patient-ward-select').value;
+                const bed = document.getElementById('patient-bed-select').value;
+                
+                if (ward && bed) {
+                    wardInput.value = `${ward}/${bed}`;
+                } else {
+                    wardInput.value = '';
+                }
+            }
+        }
+        
+        // Function to parse existing location string and set form values
+        function setLocationFormValues(locationString) {
+            const otherLocationToggle = document.getElementById('other-location-toggle');
+            const wardSelect = document.getElementById('patient-ward-select');
+            const bedSelect = document.getElementById('patient-bed-select');
+            const otherLocation = document.getElementById('patient-other-location');
+            const wardInput = document.getElementById('patient-ward-input');
+            
+            // Default to dropdown mode
+            otherLocationToggle.checked = false;
+            toggleOtherLocation();
+            
+            if (!locationString) {
+                return;
+            }
+            
+            // Try to match the simple Ward/Bed pattern (e.g., "B4/12")
+            const wardBedMatch = locationString.match(/([A-Za-z0-9]+)\/(\d+)/);
+            
+            if (wardBedMatch) {
+                const [_, ward, bed] = wardBedMatch;
+                
+                // Check if the ward exists in our list
+                if (wards.includes(ward)) {
+                    wardSelect.value = ward;
+                    updateBedSelectors(ward);
+                    
+                    // Check if the bed exists for this ward
+                    if (wardBeds[ward] && wardBeds[ward].includes(bed)) {
+                        bedSelect.value = bed;
+                        return;
+                    }
+                }
+            }
+            
+            // If we can't match the pattern or values aren't in our lists,
+            // fall back to "other location"
+            otherLocationToggle.checked = true;
+            toggleOtherLocation();
+            otherLocation.value = locationString;
+            wardInput.value = locationString;
+        }
+        
+        // Initialize settings and location management
+        function initLocationSettings() {
+            // Initialize ward and bed data
+            initializeWardsIfEmpty();
+            
+            // Event listeners for settings page
+            document.getElementById('add-ward-btn').addEventListener('click', addWard);
+            document.getElementById('add-bed-btn').addEventListener('click', addBed);
+            
+            // Event listeners for location selection in patient form
+            document.getElementById('patient-ward-select').addEventListener('change', handleWardChange);
+            document.getElementById('other-location-toggle').addEventListener('change', toggleOtherLocation);
+            
+            // Update location values before form submission
+            document.getElementById('patient-form').addEventListener('submit', function() {
+                updateLocationValue();
+            });
+            
+            // Initialize the ward list and selectors
+            renderWardList();
+            updateWardSelectors();
+            
+            // Add event listener for settings tab
+            document.querySelector('.main-tab-btn[data-view="settings"]').addEventListener('click', function() {
+                renderWardList();
+            });
+        }
+        
+        // Settings view
+        const settingsView = document.getElementById('settings-view');
+        
         // Initial render
         renderPatientList();
+        
+        // Initialize ward and bed settings
+        initLocationSettings();
     </script>
 </body>
 </html> 

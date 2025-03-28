@@ -1532,4 +1532,174 @@ select:focus-visible,
 textarea:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
+}
+
+/* Settings View Styles */
+.settings-container {
+    padding: 10px 0;
+}
+
+.settings-section {
+    background-color: var(--card-bg-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: var(--card-shadow);
+}
+
+.settings-section h2 {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.settings-section h2 i {
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
+.settings-description {
+    color: var(--text-light);
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.ward-management {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.ward-list-container, .bed-management {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--card-bg-color);
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    font-weight: 500;
+}
+
+.item-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.edit-beds-btn, .delete-ward-btn, .delete-bed-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.edit-beds-btn {
+    color: var(--primary-color);
+}
+
+.delete-ward-btn, .delete-bed-btn {
+    color: var(--danger-color);
+}
+
+.edit-beds-btn:hover, .delete-ward-btn:hover, .delete-bed-btn:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.add-item-form {
+    display: flex;
+    gap: 10px;
+}
+
+.add-item-form input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+}
+
+.add-item-form button {
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.no-items {
+    padding: 15px;
+    text-align: center;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+/* Location Selector Styles */
+.location-selector {
+    margin-bottom: 10px;
+}
+
+.location-select-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.location-select-group select {
+    flex: 1;
+}
+
+.other-location-container {
+    margin-bottom: 10px;
+}
+
+.location-toggle {
+    margin-top: 8px;
+}
+
+.other-location-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.other-location-checkbox input {
+    width: auto;
+    cursor: pointer;
+}
+
+/* Responsive styles for settings */
+@media (max-width: 768px) {
+    .ward-management {
+        grid-template-columns: 1fr;
+    }
+    
+    .location-select-group {
+        flex-direction: column;
+    }
 } 
