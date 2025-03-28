@@ -256,8 +256,9 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="patient-age-input">Age</label>
-                            <input type="number" id="patient-age-input" min="0" max="120">
+                            <label for="patient-dob-input">Date of Birth</label>
+                            <input type="date" id="patient-dob-input">
+                            <div class="form-hint">Age: <span id="calculated-age">Not set</span></div>
                         </div>
                         <div class="form-group">
                             <label for="patient-gender-input">Gender</label>
@@ -1564,8 +1565,13 @@
             modalTitle.textContent = 'Edit Patient';
             document.getElementById('patient-name-input').value = patient.name;
             document.getElementById('patient-id-input').value = patient.id;
-            document.getElementById('patient-age-input').value = patient.age;
+            document.getElementById('patient-dob-input').value = patient.dob || '';
             document.getElementById('patient-gender-input').value = patient.gender;
+            
+            // Update the calculated age
+            if (patient.dob) {
+                updateCalculatedAge(patient.dob);
+            }
             
             // Set location form values based on patient's location
             setLocationFormValues(patient.ward);
@@ -1610,6 +1616,32 @@
             });
         }
         
+        // Function to calculate age from DOB
+        function calculateAge(dob) {
+            if (!dob) return '';
+            
+            const dobDate = new Date(dob);
+            const now = new Date();
+            
+            let age = now.getFullYear() - dobDate.getFullYear();
+            const monthDiff = now.getMonth() - dobDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dobDate.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+        
+        // Function to update calculated age display
+        function updateCalculatedAge(dob) {
+            const calculatedAgeElement = document.getElementById('calculated-age');
+            if (calculatedAgeElement) {
+                const age = calculateAge(dob);
+                calculatedAgeElement.textContent = age ? age : 'Not set';
+            }
+        }
+        
         // Save patient (add or edit)
         function savePatient(e) {
             e.preventDefault();
@@ -1623,13 +1655,15 @@
                 }
             });
             
-            // Handle potentially empty fields
-            const ageInput = document.getElementById('patient-age-input').value;
+            // Get DOB and calculate age
+            const dob = document.getElementById('patient-dob-input').value;
+            const age = calculateAge(dob);
             
             const patientData = {
                 name: document.getElementById('patient-name-input').value,
                 id: document.getElementById('patient-id-input').value,
-                age: ageInput ? parseInt(ageInput) : '',
+                dob: dob,
+                age: age,
                 gender: document.getElementById('patient-gender-input').value || '',
                 ward: document.getElementById('patient-ward-input').value || '',
                 diagnoses: diagnoses
@@ -2077,6 +2111,12 @@
         closeModal.addEventListener('click', () => patientModal.classList.add('hidden'));
         closeTaskModal.addEventListener('click', () => taskEditModal.classList.add('hidden'));
         toggleTaskDetailsBtn.addEventListener('click', toggleTaskDetails);
+        
+        // Add event listener for DOB field to update calculated age
+        document.getElementById('patient-dob-input').addEventListener('change', function() {
+            updateCalculatedAge(this.value);
+        });
+        
         patientForm.addEventListener('submit', savePatient);
         taskForm.addEventListener('submit', addTask);
         editTaskForm.addEventListener('submit', saveEditedTask);
