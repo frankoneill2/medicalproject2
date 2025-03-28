@@ -683,9 +683,9 @@
                     </div>
                     <div class="patient-info">
                         <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
-                        <p><span class="info-label">Age/Gender:</span> ${patient.age || '-'}/${patient.gender || '-'}</p>
+                        <p><span class="info-label">Gender:</span> ${patient.gender || 'Not specified'}</p>
                         <p><span class="info-label">Location:</span> ${formatLocation(patient.ward)}</p>
-                        <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
+                        <p><span class="info-label">Age/DOB:</span> ${patient.age || '-'} ${patient.dob ? `(${patient.dob})` : ''}</p>
                     </div>
                     ${diagnosesHtml}
                     <div class="patient-tasks-container">
