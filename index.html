@@ -710,6 +710,20 @@
                                 </div>` : ''}
                             </div>
                         </div>
+                        <div class="patient-quick-add-task">
+                            <form class="quick-task-form" data-patient-id="${patient.id}">
+                                <input type="text" class="quick-task-input" placeholder="Add new task..." required>
+                                <div class="quick-task-actions">
+                                    <select class="quick-task-priority">
+                                        <option value="normal">Normal</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                    <button type="submit" class="quick-task-add-btn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                         <div class="patient-tasks-list">
                             ${allTasks.length === 0 ? 
                             '<p class="no-tasks-message">No tasks for this patient</p>' : ''}
@@ -733,6 +747,31 @@
                     taskItem.innerHTML = `
                         <div class="compact-task-content">
                             <span class="compact-task-text">${task.text}</span>
+                            <div class="compact-task-actions">
+                                ${task.priority !== 'completed' ? 
+                                    `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
+                                        <i class="fas fa-check"></i>
+                                    </button>` : ''
+                                }
+                                ${task.priority !== 'in-progress' && task.priority !== 'completed' ? 
+                                    `<button class="compact-task-progress-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark In Progress">
+                                        <i class="fas fa-spinner"></i>
+                                    </button>` : ''
+                                }
+                                ${task.priority === 'in-progress' ? 
+                                    `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
+                                        <i class="fas fa-check"></i>
+                                    </button>` : ''
+                                }
+                                ${task.priority === 'completed' ? 
+                                    `<button class="compact-task-reopen-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Reopen Task">
+                                        <i class="fas fa-redo-alt"></i>
+                                    </button>` : ''
+                                }
+                                <button class="compact-task-edit-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Edit Task">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                     tasksList.appendChild(taskItem);
@@ -760,6 +799,31 @@
                         taskItem.innerHTML = `
                             <div class="compact-task-content">
                                 <span class="compact-task-text">${task.text}</span>
+                                <div class="compact-task-actions">
+                                    ${task.priority !== 'completed' ? 
+                                        `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
+                                            <i class="fas fa-check"></i>
+                                        </button>` : ''
+                                    }
+                                    ${task.priority !== 'in-progress' && task.priority !== 'completed' ? 
+                                        `<button class="compact-task-progress-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark In Progress">
+                                            <i class="fas fa-spinner"></i>
+                                        </button>` : ''
+                                    }
+                                    ${task.priority === 'in-progress' ? 
+                                        `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
+                                            <i class="fas fa-check"></i>
+                                        </button>` : ''
+                                    }
+                                    ${task.priority === 'completed' ? 
+                                        `<button class="compact-task-reopen-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Reopen Task">
+                                            <i class="fas fa-redo-alt"></i>
+                                        </button>` : ''
+                                    }
+                                    <button class="compact-task-edit-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Edit Task">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                </div>
                             </div>
                         `;
                         hiddenTasksContainer.appendChild(taskItem);
@@ -778,6 +842,61 @@
                             hiddenTasksContainer.style.display = 'block';
                             this.textContent = 'Show less';
                             this.setAttribute('data-expanded', 'true');
+                        }
+                    });
+                }
+                
+                // Add event listeners for task action buttons
+                patientCard.querySelectorAll('.compact-task-complete-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        const taskId = parseInt(this.getAttribute('data-task-id'));
+                        markTaskCompleteFromCard(patientId, taskId);
+                    });
+                });
+                
+                patientCard.querySelectorAll('.compact-task-progress-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        const taskId = parseInt(this.getAttribute('data-task-id'));
+                        markTaskInProgressFromCard(patientId, taskId);
+                    });
+                });
+                
+                patientCard.querySelectorAll('.compact-task-reopen-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        const taskId = parseInt(this.getAttribute('data-task-id'));
+                        reopenTaskFromCard(patientId, taskId);
+                    });
+                });
+                
+                patientCard.querySelectorAll('.compact-task-edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        const taskId = parseInt(this.getAttribute('data-task-id'));
+                        showEditTaskModalFromCard(patientId, taskId);
+                    });
+                });
+                
+                // Add event listener for the quick task form
+                const quickTaskForm = patientCard.querySelector('.quick-task-form');
+                if (quickTaskForm) {
+                    quickTaskForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const patientId = this.getAttribute('data-patient-id');
+                        const taskText = this.querySelector('.quick-task-input').value.trim();
+                        const taskPriority = this.querySelector('.quick-task-priority').value;
+                        
+                        if (taskText) {
+                            addTaskFromCard(patientId, taskText, taskPriority);
+                            this.querySelector('.quick-task-input').value = '';
                         }
                     });
                 }
@@ -2097,6 +2216,114 @@
             const currentFilter = document.getElementById('task-filter').value;
             const searchTerm = document.getElementById('task-search').value.trim();
             renderAllTasks(currentFilter, searchTerm);
+        }
+        
+        // Task management functions for the patient card
+        
+        // Function to add a task from the patient card
+        function addTaskFromCard(patientId, taskText, taskPriority) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            // Create new task
+            const newTask = {
+                id: Date.now(),
+                text: taskText,
+                priority: taskPriority,
+                date: new Date().toLocaleString()
+            };
+            
+            // Ensure patient has a tasks array
+            if (!patients[patientIndex].tasks) {
+                patients[patientIndex].tasks = [];
+            }
+            
+            // Add the new task
+            patients[patientIndex].tasks.push(newTask);
+            
+            // Save changes
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Re-render the patient list to show the updated task
+            renderPatientList();
+        }
+        
+        // Function to mark a task as complete from the patient card
+        function markTaskCompleteFromCard(patientId, taskId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Set to completed
+            patients[patientIndex].tasks[taskIndex].priority = 'completed';
+            patients[patientIndex].tasks[taskIndex].completedDate = new Date().toLocaleString();
+            
+            // Save changes
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Re-render the patient list
+            renderPatientList();
+        }
+        
+        // Function to mark a task as in-progress from the patient card
+        function markTaskInProgressFromCard(patientId, taskId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Set to in-progress
+            patients[patientIndex].tasks[taskIndex].priority = 'in-progress';
+            patients[patientIndex].tasks[taskIndex].progressDate = new Date().toLocaleString();
+            
+            // Save changes
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Re-render the patient list
+            renderPatientList();
+        }
+        
+        // Function to reopen a completed task from the patient card
+        function reopenTaskFromCard(patientId, taskId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            // Set back to normal
+            patients[patientIndex].tasks[taskIndex].priority = 'normal';
+            delete patients[patientIndex].tasks[taskIndex].completedDate;
+            delete patients[patientIndex].tasks[taskIndex].progressDate;
+            
+            // Save changes
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Re-render the patient list
+            renderPatientList();
+        }
+        
+        // Function to show the edit task modal from patient card
+        function showEditTaskModalFromCard(patientId, taskId) {
+            currentPatientId = patientId; // Set the current patient ID
+            currentEditingTaskId = taskId;
+            
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const task = patients[patientIndex].tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            // Populate form fields
+            editTaskText.value = task.text;
+            editTaskDescription.value = task.description || '';
+            editTaskPriority.value = task.priority;
+            
+            // Show the modal
+            taskEditModal.classList.remove('hidden');
         }
         
         // Ward and Bed management functions

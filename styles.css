@@ -328,6 +328,69 @@ h3 {
   color: var(--text-color);
 }
 
+.patient-quick-add-task {
+  margin: 8px 0;
+}
+
+.quick-task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  padding: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.quick-task-input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background-color: white;
+}
+
+.quick-task-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(45, 109, 164, 0.1);
+}
+
+.quick-task-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.quick-task-priority {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background-color: white;
+}
+
+.quick-task-add-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.quick-task-add-btn:hover {
+  background-color: var(--primary-dark);
+}
+
 .patient-tasks-list {
   display: flex;
   flex-direction: column;
@@ -364,6 +427,8 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 5px;
 }
 
 .compact-task-text {
@@ -371,6 +436,53 @@ h3 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.compact-task-actions {
+  display: flex;
+  gap: 3px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.compact-task-item:hover .compact-task-actions {
+  opacity: 1;
+}
+
+.compact-task-complete-btn,
+.compact-task-progress-btn, 
+.compact-task-reopen-btn,
+.compact-task-edit-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.compact-task-complete-btn {
+  color: var(--success-color);
+}
+
+.compact-task-progress-btn {
+  color: var(--warning-color);
+}
+
+.compact-task-reopen-btn {
+  color: var(--primary-color);
+}
+
+.compact-task-complete-btn:hover,
+.compact-task-progress-btn:hover,
+.compact-task-reopen-btn:hover,
+.compact-task-edit-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .show-more-tasks-btn {
@@ -1176,13 +1288,51 @@ h3 {
   }
   
   .compact-task-item {
-    padding: 5px 8px;
-    font-size: 12px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .compact-task-actions {
+    opacity: 0.9;
+  }
+  
+  .compact-task-complete-btn,
+  .compact-task-progress-btn,
+  .compact-task-reopen-btn,
+  .compact-task-edit-btn {
+    padding: 6px;
+    font-size: 14px;
+    min-width: 30px;
+    min-height: 30px;
+  }
+  
+  .patient-quick-add-task {
+    margin: 10px 0;
+  }
+  
+  .quick-task-form {
+    padding: 8px;
+  }
+  
+  .quick-task-input {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .quick-task-priority {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  
+  .quick-task-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
   
   .show-more-tasks-btn {
-    font-size: 12px;
-    padding: 6px;
+    font-size: 13px;
+    padding: 8px;
   }
   
   /* Tab buttons for mobile */
