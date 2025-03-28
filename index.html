@@ -631,28 +631,51 @@
                 completed: 0
             };
             
-            if (patient.tasks) {
-                patient.tasks.forEach(task => {
+            // Get all tasks and sort them by priority and date
+            let allTasks = [];
+            if (patient.tasks && patient.tasks.length > 0) {
+                allTasks = [...patient.tasks].sort((a, b) => {
+                    // Urgent tasks first
+                    if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+                    if (a.priority !== 'urgent' && b.priority === 'urgent') return 1;
+                    
+                    // Then in-progress tasks
+                    if (a.priority === 'in-progress' && b.priority !== 'in-progress' && b.priority !== 'urgent') return -1;
+                    if (a.priority !== 'in-progress' && a.priority !== 'urgent' && b.priority === 'in-progress') return 1;
+                    
+                    // Then normal tasks
+                    if (a.priority === 'normal' && b.priority === 'completed') return -1;
+                    if (a.priority === 'completed' && b.priority === 'normal') return 1;
+                    
+                    // Within the same priority, sort by date (newest first)
+                    return new Date(b.date) - new Date(a.date);
+                });
+                
+                // Count tasks by priority for indicators
+                allTasks.forEach(task => {
                     if (taskCounts.hasOwnProperty(task.priority)) {
                         taskCounts[task.priority]++;
                     }
                 });
             }
             
-            // Get primary diagnosis for card display
-            let primaryDiagnosis = 'No diagnosis';
+            // Get all diagnoses
+            let diagnosesHtml = '<div class="diagnoses-container">';
+            
             if (patient.diagnoses && patient.diagnoses.length > 0) {
-                primaryDiagnosis = patient.diagnoses[0];
-                
-                // If there are multiple diagnoses, add a count
-                if (patient.diagnoses.length > 1) {
-                    primaryDiagnosis += ` +${patient.diagnoses.length - 1}`;
-                }
+                patient.diagnoses.forEach(diagnosis => {
+                    diagnosesHtml += `<div class="diagnosis-badge">${diagnosis}</div>`;
+                });
             } else if (patient.diagnosis) {
                 // For backward compatibility
-                primaryDiagnosis = patient.diagnosis;
+                diagnosesHtml += `<div class="diagnosis-badge">${patient.diagnosis}</div>`;
+            } else {
+                diagnosesHtml += `<div class="diagnosis-badge">No diagnosis</div>`;
             }
             
+            diagnosesHtml += '</div>';
+            
+            // Create the base HTML for the patient card
             patientCard.innerHTML = `
                 <div class="patient-card-content">
                     <div class="patient-header">
@@ -664,30 +687,101 @@
                         <p><span class="info-label">Location:</span> ${formatLocation(patient.ward)}</p>
                         <p><span class="info-label">DOB:</span> ${patient.dob || 'Not available'}</p>
                     </div>
-                    <div class="diagnosis-badge">${primaryDiagnosis}</div>
-                    <div class="patient-footer">
-                        <div class="task-indicators">
-                            ${taskCounts.urgent > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
-                            </div>` : ''}
-                            ${taskCounts.normal > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count normal">${taskCounts.normal}</span> Tasks
-                            </div>` : ''}
-                            ${taskCounts['in-progress'] > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count in-progress">${taskCounts['in-progress']}</span> In Progress
-                            </div>` : ''}
-                            ${taskCounts.completed > 0 ? 
-                            `<div class="task-indicator">
-                                <span class="task-count completed">${taskCounts.completed}</span> Done
-                            </div>` : ''}
+                    ${diagnosesHtml}
+                    <div class="patient-tasks-container">
+                        <div class="patient-tasks-header">
+                            <h4>Tasks</h4>
+                            <div class="task-indicators">
+                                ${taskCounts.urgent > 0 ? 
+                                `<div class="task-indicator">
+                                    <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
+                                </div>` : ''}
+                                ${taskCounts.normal > 0 ? 
+                                `<div class="task-indicator">
+                                    <span class="task-count normal">${taskCounts.normal}</span> Tasks
+                                </div>` : ''}
+                                ${taskCounts['in-progress'] > 0 ? 
+                                `<div class="task-indicator">
+                                    <span class="task-count in-progress">${taskCounts['in-progress']}</span> In Progress
+                                </div>` : ''}
+                                ${taskCounts.completed > 0 ? 
+                                `<div class="task-indicator">
+                                    <span class="task-count completed">${taskCounts.completed}</span> Done
+                                </div>` : ''}
+                            </div>
                         </div>
+                        <div class="patient-tasks-list">
+                            ${allTasks.length === 0 ? 
+                            '<p class="no-tasks-message">No tasks for this patient</p>' : ''}
+                        </div>
+                    </div>
+                    <div class="patient-footer">
                         <button class="view-patient-btn" data-id="${patient.id}">View Details</button>
                     </div>
                 </div>
             `;
+            
+            // If there are tasks, add them to the task list
+            if (allTasks.length > 0) {
+                const tasksList = patientCard.querySelector('.patient-tasks-list');
+                
+                // First, add the visible tasks (up to 3)
+                const visibleTasks = allTasks.slice(0, 3);
+                visibleTasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = `compact-task-item ${task.priority}`;
+                    taskItem.innerHTML = `
+                        <div class="compact-task-content">
+                            <span class="compact-task-text">${task.text}</span>
+                        </div>
+                    `;
+                    tasksList.appendChild(taskItem);
+                });
+                
+                // If there are more than 3 tasks, add a button to show more
+                if (allTasks.length > 3) {
+                    const showMoreBtn = document.createElement('button');
+                    showMoreBtn.className = 'show-more-tasks-btn';
+                    showMoreBtn.textContent = `Show ${allTasks.length - 3} more tasks`;
+                    showMoreBtn.setAttribute('data-expanded', 'false');
+                    showMoreBtn.setAttribute('data-patient-id', patient.id);
+                    tasksList.appendChild(showMoreBtn);
+                    
+                    // Create the container for hidden tasks
+                    const hiddenTasksContainer = document.createElement('div');
+                    hiddenTasksContainer.className = 'hidden-tasks-container';
+                    hiddenTasksContainer.style.display = 'none';
+                    
+                    // Add the remaining tasks to the hidden container
+                    const hiddenTasks = allTasks.slice(3);
+                    hiddenTasks.forEach(task => {
+                        const taskItem = document.createElement('div');
+                        taskItem.className = `compact-task-item ${task.priority}`;
+                        taskItem.innerHTML = `
+                            <div class="compact-task-content">
+                                <span class="compact-task-text">${task.text}</span>
+                            </div>
+                        `;
+                        hiddenTasksContainer.appendChild(taskItem);
+                    });
+                    
+                    tasksList.appendChild(hiddenTasksContainer);
+                    
+                    // Add event listener to toggle hidden tasks
+                    showMoreBtn.addEventListener('click', function() {
+                        const isExpanded = this.getAttribute('data-expanded') === 'true';
+                        if (isExpanded) {
+                            hiddenTasksContainer.style.display = 'none';
+                            this.textContent = `Show ${allTasks.length - 3} more tasks`;
+                            this.setAttribute('data-expanded', 'false');
+                        } else {
+                            hiddenTasksContainer.style.display = 'block';
+                            this.textContent = 'Show less';
+                            this.setAttribute('data-expanded', 'true');
+                        }
+                    });
+                }
+            }
             
             // Add event listener to view button
             patientCard.querySelector('.view-patient-btn').addEventListener('click', function() {
