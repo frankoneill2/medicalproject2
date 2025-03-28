@@ -1052,11 +1052,20 @@ h3 {
   .main-tabs {
     display: flex;
     justify-content: space-around;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
   
   .main-tab-btn {
     flex: 1;
     padding: 10px 5px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  
+  .main-tab-btn i {
+    margin-right: 4px;
+    font-size: 15px;
   }
   
   /* Patient detail view improvements for mobile */
@@ -1140,12 +1149,68 @@ h3 {
   /* Improve tappable area in forms */
   .form-group label {
     margin-bottom: 8px;
+    font-size: 16px;
   }
   
   .form-group input,
   .form-group select,
   .form-group textarea {
     padding: 12px;
+    font-size: 16px;
+  }
+  
+  /* Settings view improvements for very small screens */
+  .settings-container .settings-section {
+    padding: 15px;
+  }
+  
+  .ward-list-container, 
+  .bed-management {
+    padding: 12px;
+  }
+  
+  /* Better layout for patient modal on small screens */
+  .modal-content {
+    padding: 15px;
+    width: 95%;
+    max-height: 85vh;
+  }
+  
+  /* Increase font size for better readability */
+  .other-location-checkbox span {
+    font-size: 15px;
+  }
+  
+  /* Increase font size of list items */
+  .list-item .item-name {
+    font-size: 16px;
+  }
+  
+  /* Fix spacing on main tabs */
+  .main-tab-btn {
+    padding: 12px 5px;
+    font-size: 13px;
+  }
+  
+  .main-tab-btn i {
+    margin-right: 4px;
+    font-size: 15px;
+  }
+  
+  /* Better spacing in settings */
+  .settings-section h2 {
+    font-size: 18px;
+  }
+  
+  .settings-section h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  /* More touch-friendly select elements */
+  select {
+    font-size: 16px;
+    padding: 10px;
   }
 }
 
@@ -1669,6 +1734,12 @@ textarea:focus-visible {
 
 .location-select-group select {
     flex: 1;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
 }
 
 .other-location-container {
@@ -1676,21 +1747,25 @@ textarea:focus-visible {
 }
 
 .location-toggle {
-    margin-top: 8px;
+    margin-top: 12px;
+    padding: 5px 0;
 }
 
 .other-location-checkbox {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 14px;
     color: var(--text-light);
     cursor: pointer;
+    padding: 5px 0;
 }
 
 .other-location-checkbox input {
     width: auto;
     cursor: pointer;
+    height: 16px;
+    width: 16px;
 }
 
 /* Responsive styles for settings */
@@ -1701,5 +1776,68 @@ textarea:focus-visible {
     
     .location-select-group {
         flex-direction: column;
+    }
+    
+    .add-item-form {
+        flex-direction: column;
+    }
+    
+    .add-item-form input {
+        margin-bottom: 8px;
+    }
+    
+    .list-item {
+        flex-wrap: wrap;
+    }
+    
+    .item-actions {
+        margin-top: 8px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .edit-beds-btn, .delete-ward-btn, .delete-bed-btn {
+        font-size: 18px;
+        padding: 8px 12px;
+    }
+    
+    /* Improve tap targets */
+    .other-location-checkbox {
+        padding: 8px 0;
+    }
+    
+    .other-location-checkbox input[type="checkbox"] {
+        transform: scale(1.2);
+        margin-right: 5px;
+    }
+    
+    /* Make setting section title more readable */
+    .settings-section h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .settings-description {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+    
+    /* Improve the location selector spacing */
+    .location-selector {
+        margin-bottom: 15px;
+    }
+    
+    /* Make selects larger and easier to tap */
+    select.styled-select {
+        padding: 12px 15px;
+        font-size: 16px;
+        margin-bottom: 8px;
+        background-position: calc(100% - 15px) center;
+    }
+    
+    /* Make other location input larger */
+    #patient-other-location {
+        padding: 12px 15px;
+        font-size: 16px;
     }
 } 
