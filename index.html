@@ -53,14 +53,26 @@
             <header>
                 <h1><i class="fas fa-tasks"></i> All Tasks</h1>
                 <div class="header-actions">
-                    <select id="task-filter" class="task-filter-select">
-                        <option value="all">All Tasks</option>
-                        <option value="urgent">Urgent Only</option>
-                        <option value="normal">Normal Only</option>
-                        <option value="in-progress">In Progress Only</option>
-                        <option value="completed">Completed Only</option>
-                        <option value="pending">Pending Only</option>
-                    </select>
+                    <div class="task-filter-container">
+                        <div class="task-filter-checkbox-group">
+                            <label class="task-filter-label">
+                                <input type="checkbox" value="normal" class="task-filter-checkbox" checked>
+                                <span>Normal</span>
+                            </label>
+                            <label class="task-filter-label">
+                                <input type="checkbox" value="urgent" class="task-filter-checkbox" checked>
+                                <span>Urgent</span>
+                            </label>
+                            <label class="task-filter-label">
+                                <input type="checkbox" value="in-progress" class="task-filter-checkbox" checked>
+                                <span>In Progress</span>
+                            </label>
+                            <label class="task-filter-label">
+                                <input type="checkbox" value="completed" class="task-filter-checkbox" checked>
+                                <span>Completed</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </header>
             
@@ -1771,7 +1783,7 @@
         }
         
         // Function to render all tasks
-        function renderAllTasks(filter = 'all', searchTerm = '') {
+        function renderAllTasks(filters = ['normal', 'urgent', 'in-progress', 'completed'], searchTerm = '') {
             allTasksContainer.innerHTML = '';
             
             // Group tasks by ward and completion status
@@ -1793,13 +1805,16 @@
                 }
                 
                 patient.tasks.forEach(task => {
-                    // Apply filters
-                    if (filter !== 'all') {
-                        if (filter === 'urgent' && task.priority !== 'urgent') return;
-                        if (filter === 'normal' && task.priority !== 'normal') return;
-                        if (filter === 'in-progress' && task.priority !== 'in-progress') return;
-                        if (filter === 'completed' && task.priority !== 'completed') return;
-                        if (filter === 'pending' && (task.priority === 'completed' || task.priority === 'in-progress')) return;
+                    // Apply multi-selection filters
+                    if (filters.length > 0) {
+                        // Handle 'normal' and 'urgent' as pending tasks
+                        if (task.priority === 'normal' || task.priority === 'urgent') {
+                            // Return if neither normal nor urgent are in filters
+                            if (!filters.includes(task.priority)) return;
+                        } else if (!filters.includes(task.priority)) {
+                            // For other priorities, check exact match
+                            return;
+                        }
                     }
                     
                     // Apply search term
@@ -2203,7 +2218,12 @@
                     patientListView.classList.add('hidden');
                     settingsView.classList.remove('active');
                     settingsView.classList.add('hidden');
-                    renderAllTasks();
+                    
+                    // Get selected filters and render tasks
+                    const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                        .map(cb => cb.value);
+                    const searchTerm = document.getElementById('task-search').value.trim();
+                    renderAllTasks(selectedFilters, searchTerm);
                 } else if (viewId === 'settings') {
                     settingsView.classList.add('active');
                     settingsView.classList.remove('hidden');
@@ -2216,17 +2236,46 @@
             });
         });
         
-        // Event listener for task filter
-        taskFilter.addEventListener('change', function() {
-            const searchTerm = taskSearch.value.trim();
-            renderAllTasks(this.value, searchTerm);
+        // Event listeners for task filter checkboxes
+        document.querySelectorAll('.task-filter-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const searchTerm = taskSearch.value.trim();
+                
+                // Get all selected filter values
+                const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                    .map(cb => cb.value);
+                
+                // Visual feedback - add selected class to parent label
+                document.querySelectorAll('.task-filter-label').forEach(label => {
+                    const cb = label.querySelector('input[type="checkbox"]');
+                    if (cb.checked) {
+                        label.classList.add('selected');
+                    } else {
+                        label.classList.remove('selected');
+                    }
+                });
+                
+                renderAllTasks(selectedFilters, searchTerm);
+            });
+        });
+        
+        // Initialize selected state for labels
+        document.querySelectorAll('.task-filter-label').forEach(label => {
+            const cb = label.querySelector('input[type="checkbox"]');
+            if (cb.checked) {
+                label.classList.add('selected');
+            }
         });
         
         // Event listener for task search
         taskSearch.addEventListener('input', function() {
-            const currentFilter = taskFilter.value;
             const searchTerm = this.value.trim();
-            renderAllTasks(currentFilter, searchTerm);
+            
+            // Get all selected filter values
+            const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                .map(cb => cb.value);
+                
+            renderAllTasks(selectedFilters, searchTerm);
         });
         
         // Add event listeners for delete buttons in the all tasks view
@@ -2252,9 +2301,10 @@
                 localStorage.setItem('patients', JSON.stringify(patients));
                 
                 // Re-render the all tasks view
-                const currentFilter = document.getElementById('task-filter').value;
+                const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                    .map(cb => cb.value);
                 const searchTerm = document.getElementById('task-search').value.trim();
-                renderAllTasks(currentFilter, searchTerm);
+                renderAllTasks(selectedFilters, searchTerm);
             }
         }
         
@@ -2289,9 +2339,10 @@
             localStorage.setItem('patients', JSON.stringify(patients));
             
             // Re-render the all tasks view
-            const currentFilter = document.getElementById('task-filter').value;
+            const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                .map(cb => cb.value);
             const searchTerm = document.getElementById('task-search').value.trim();
-            renderAllTasks(currentFilter, searchTerm);
+            renderAllTasks(selectedFilters, searchTerm);
         }
         
         // Function to mark a task as complete directly from pending in All Tasks view
@@ -2312,9 +2363,10 @@
             localStorage.setItem('patients', JSON.stringify(patients));
             
             // Re-render the all tasks view
-            const currentFilter = document.getElementById('task-filter').value;
+            const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                .map(cb => cb.value);
             const searchTerm = document.getElementById('task-search').value.trim();
-            renderAllTasks(currentFilter, searchTerm);
+            renderAllTasks(selectedFilters, searchTerm);
         }
         
         // Task management functions for the patient card
