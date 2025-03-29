@@ -20,6 +20,12 @@
             <button class="main-tab-btn" data-view="settings">
                 <i class="fas fa-cog"></i> Settings
             </button>
+            <div class="view-options">
+                <label class="view-mode-toggle" title="Toggle compact mode">
+                    <input type="checkbox" id="compact-mode-toggle" checked>
+                    <span class="toggle-label">Compact</span>
+                </label>
+            </div>
         </div>
         
         <!-- Main View (Patient List) -->
@@ -792,8 +798,42 @@
             setTheme(newTheme);
         });
         
-        // Call initTheme at the bottom of your script section, before the initial render
+        // Function to handle compact mode toggle
+        function initCompactMode() {
+            const compactToggle = document.getElementById('compact-mode-toggle');
+            const patientsContainer = document.getElementById('patients-container');
+            
+            // Check for saved preference
+            const savedCompactMode = localStorage.getItem('compactMode');
+            if (savedCompactMode !== null) {
+                compactToggle.checked = savedCompactMode === 'true';
+            }
+            
+            // Apply compact mode class based on toggle state
+            if (compactToggle.checked) {
+                document.documentElement.classList.add('compact-mode');
+            } else {
+                document.documentElement.classList.remove('compact-mode');
+            }
+            
+            // Event listener for toggle changes
+            compactToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.documentElement.classList.add('compact-mode');
+                    localStorage.setItem('compactMode', 'true');
+                } else {
+                    document.documentElement.classList.remove('compact-mode');
+                    localStorage.setItem('compactMode', 'false');
+                }
+                
+                // Re-render the patient list to apply compact mode changes
+                renderPatientList();
+            });
+        }
+        
+        // Call initTheme and initCompactMode before the initial render
         initTheme();
+        initCompactMode();
         
         // Add this function to create patient cards
         function createPatientCard(patient) {
@@ -855,76 +895,98 @@
             // Create the base HTML for the patient card
             patientCard.innerHTML = `
                 <div class="patient-card-content">
-                    <div class="patient-header">
+                    <div class="patient-header clickable" data-id="${patient.id}">
                         <h3 class="patient-name">${patient.name}</h3>
                         <button class="bloods-button" data-patient-id="${patient.id}" title="Toggle bloods task for tomorrow">
                             <i class="fas fa-vial"></i>
                         </button>
                     </div>
-                    <div class="patient-info-compact">
+                    <div class="patient-info-compact clickable" data-id="${patient.id}">
                         <p>${patient.age || ''}${patient.gender ? patient.gender : ''} &nbsp;•&nbsp; ${patient.id} &nbsp;•&nbsp; ${formatLocation(patient.ward)}</p>
                     </div>
-                    ${diagnosesHtml}
-                    <div class="patient-tasks-container">
+                    
+                    <!-- Condensed diagnoses display -->
+                    <div class="diagnoses-container-compact clickable" data-id="${patient.id}">
+                        ${patient.diagnoses && patient.diagnoses.length > 0 ? 
+                            `<div class="diagnosis-badge">${patient.diagnoses[0]}</div>
+                             ${patient.diagnoses.length > 1 ? 
+                                `<div class="diagnosis-badge diagnosis-more">+${patient.diagnoses.length - 1} more</div>
+                                 <div class="diagnoses-expanded">
+                                    ${patient.diagnoses.slice(1).map(diag => `<div class="diagnosis-badge">${diag}</div>`).join('')}
+                                 </div>` : 
+                                ''}` : 
+                            `<div class="diagnosis-badge">No diagnosis</div>`
+                        }
+                    </div>
+                    
+                    <!-- Accordion-style tasks section -->
+                    <div class="patient-tasks-container collapsed">
                         <div class="patient-tasks-header">
-                            <h4>Tasks</h4>
-                            <div class="task-indicators">
-                                ${taskCounts.urgent > 0 ? 
-                                `<div class="task-indicator">
-                                    <span class="task-count urgent">${taskCounts.urgent}</span> Urgent
-                                </div>` : ''}
-                                ${taskCounts.normal > 0 ? 
-                                `<div class="task-indicator">
-                                    <span class="task-count normal">${taskCounts.normal}</span> Tasks
-                                </div>` : ''}
-                                ${taskCounts['in-progress'] > 0 ? 
-                                `<div class="task-indicator">
-                                    <span class="task-count in-progress">${taskCounts['in-progress']}</span> In Progress
-                                </div>` : ''}
-                                ${taskCounts.completed > 0 ? 
-                                `<div class="task-indicator">
-                                    <span class="task-count completed">${taskCounts.completed}</span> Done
-                                </div>` : ''}
+                            <div class="tasks-header-row">
+                                <h4 class="tasks-toggle">
+                                    <i class="fas fa-chevron-right tasks-toggle-icon"></i> Tasks
+                                </h4>
+                                <div class="task-indicators">
+                                    ${taskCounts.urgent > 0 ? 
+                                    `<div class="task-indicator" title="${taskCounts.urgent} Urgent">
+                                        <i class="fas fa-exclamation-circle text-urgent"></i>
+                                        <span class="task-count urgent">${taskCounts.urgent}</span>
+                                    </div>` : ''}
+                                    ${taskCounts.normal > 0 ? 
+                                    `<div class="task-indicator" title="${taskCounts.normal} Normal">
+                                        <i class="fas fa-clipboard-list text-normal"></i>
+                                        <span class="task-count normal">${taskCounts.normal}</span>
+                                    </div>` : ''}
+                                    ${taskCounts['in-progress'] > 0 ? 
+                                    `<div class="task-indicator" title="${taskCounts['in-progress']} In Progress">
+                                        <i class="fas fa-spinner text-progress"></i>
+                                        <span class="task-count in-progress">${taskCounts['in-progress']}</span>
+                                    </div>` : ''}
+                                    ${taskCounts.completed > 0 ? 
+                                    `<div class="task-indicator" title="${taskCounts.completed} Completed">
+                                        <i class="fas fa-check-circle text-completed"></i>
+                                        <span class="task-count completed">${taskCounts.completed}</span>
+                                    </div>` : ''}
+                                </div>
+                                <button class="quick-task-toggle-btn" data-patient-id="${patient.id}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="patient-quick-add-task">
-                            <button class="quick-task-toggle-btn" data-patient-id="${patient.id}">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <form class="quick-task-form hidden" data-patient-id="${patient.id}">
-                                <input type="text" class="quick-task-input" placeholder="Add new task..." required>
-                                <div class="quick-task-actions">
-                                    <div class="quick-task-selects">
-                                        <select class="quick-task-priority">
-                                            <option value="normal">Normal</option>
-                                            <option value="urgent">Urgent</option>
-                                        </select>
-                                        <select class="quick-task-type">
-                                            <option value="none">No Type</option>
-                                            <option value="investigation">Investigation</option>
-                                            <option value="bloods">Bloods</option>
-                                            <option value="imaging">Imaging</option>
-                                            <option value="other">Other</option>
-                                        </select>
+                        <div class="tasks-expandable-content">
+                            <div class="patient-quick-add-task">
+                                <form class="quick-task-form hidden" data-patient-id="${patient.id}">
+                                    <input type="text" class="quick-task-input" placeholder="Add new task..." required>
+                                    <div class="quick-task-actions">
+                                        <div class="quick-task-selects">
+                                            <select class="quick-task-priority">
+                                                <option value="normal">Normal</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                            <select class="quick-task-type">
+                                                <option value="none">No Type</option>
+                                                <option value="investigation">Investigation</option>
+                                                <option value="bloods">Bloods</option>
+                                                <option value="imaging">Imaging</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="quick-task-buttons">
+                                            <button type="submit" class="quick-task-add-btn">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="quick-task-cancel-btn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="quick-task-buttons">
-                                        <button type="submit" class="quick-task-add-btn">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button type="button" class="quick-task-cancel-btn">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
+                            <div class="patient-tasks-list">
+                                ${allTasks.length === 0 ? 
+                                '<p class="no-tasks-message">No tasks for this patient</p>' : ''}
+                            </div>
                         </div>
-                        <div class="patient-tasks-list">
-                            ${allTasks.length === 0 ? 
-                            '<p class="no-tasks-message">No tasks for this patient</p>' : ''}
-                        </div>
-                    </div>
-                    <div class="patient-footer">
-                        <button class="view-patient-btn" data-id="${patient.id}">View Details</button>
                     </div>
                 </div>
             `;
@@ -1155,10 +1217,27 @@
                 }
             }
             
-            // Add event listener to view button
-            patientCard.querySelector('.view-patient-btn').addEventListener('click', function() {
-                const patientId = this.getAttribute('data-id');
-                showPatientDetails(patientId);
+            // Add event listener to clickable elements
+            patientCard.querySelectorAll('.clickable').forEach(element => {
+                element.addEventListener('click', function() {
+                    const patientId = this.getAttribute('data-id');
+                    showPatientDetails(patientId);
+                });
+            });
+            
+            // Add event listener to tasks toggle
+            patientCard.querySelector('.tasks-toggle').addEventListener('click', function() {
+                const tasksContainer = this.closest('.patient-tasks-container');
+                tasksContainer.classList.toggle('collapsed');
+                const toggleIcon = this.querySelector('.tasks-toggle-icon');
+                
+                if (tasksContainer.classList.contains('collapsed')) {
+                    toggleIcon.classList.remove('fa-chevron-down');
+                    toggleIcon.classList.add('fa-chevron-right');
+                } else {
+                    toggleIcon.classList.remove('fa-chevron-right');
+                    toggleIcon.classList.add('fa-chevron-down');
+                }
             });
             
             // Add event listener to bloods button
