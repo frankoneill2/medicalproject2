@@ -1653,20 +1653,27 @@ h3 {
   }
   
   .title-section {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
     padding: 0 5px;
   }
   
-  .header-left, .header-center, .header-right {
-    flex: 0 0 auto;
+  .header-left {
+    grid-column: 1;
+    justify-self: start;
   }
   
   .header-center {
-    flex: 1;
+    grid-column: 2;
+    justify-self: center;
     text-align: center;
+  }
+  
+  .header-right {
+    grid-column: 3;
+    justify-self: end;
   }
   
   .modern-btn {
@@ -1947,6 +1954,16 @@ h3 {
   .header-logo {
     max-height: 24px;
     max-width: 64px;
+  }
+  
+  .title-section {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+  }
+  
+  .header-center h1 {
+    font-size: 18px;
+    white-space: nowrap;
   }
   
   .btn-text {
