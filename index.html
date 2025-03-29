@@ -861,11 +861,8 @@
                             <i class="fas fa-vial"></i>
                         </button>
                     </div>
-                    <div class="patient-info">
-                        <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
-                        <p><span class="info-label">Gender:</span> ${patient.gender || 'Not specified'}</p>
-                        <p><span class="info-label">Location:</span> ${formatLocation(patient.ward)}</p>
-                        <p><span class="info-label">Age/DOB:</span> ${patient.age || '-'} ${patient.dob ? `(${patient.dob})` : ''}</p>
+                    <div class="patient-info-compact">
+                        <p>${patient.age || ''}${patient.gender ? patient.gender : ''} &nbsp;•&nbsp; ${patient.id} &nbsp;•&nbsp; ${formatLocation(patient.ward)}</p>
                     </div>
                     ${diagnosesHtml}
                     <div class="patient-tasks-container">

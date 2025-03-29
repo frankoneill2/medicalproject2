@@ -252,14 +252,14 @@ h3 {
 }
 
 .patient-card-content {
-  padding: 16px;
+  padding: 14px;
 }
 
 .patient-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   position: relative;
 }
 
@@ -283,6 +283,21 @@ h3 {
   color: var(--text-color);
 }
 
+/* Compact patient info style */
+.patient-info-compact {
+  margin-bottom: 14px;
+}
+
+.patient-info-compact p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-color);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .info-label {
   color: var(--text-light);
   font-weight: 500;
@@ -293,26 +308,26 @@ h3 {
 .diagnoses-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 12px;
+  gap: 6px;
+  margin: 6px 0 10px;
 }
 
 .diagnosis-badge {
   background-color: #e3f2fd;
   color: #1e88e5;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
   font-weight: 500;
   display: inline-block;
 }
 
 /* Patient tasks container */
 .patient-tasks-container {
-  margin: 10px 0;
+  margin: 8px 0;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--border-radius);
-  padding: 10px;
+  padding: 8px;
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
@@ -751,7 +766,7 @@ h3 {
 .task-indicator {
   display: flex;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-light);
 }
 
@@ -759,12 +774,12 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  margin-right: 5px;
+  margin-right: 4px;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 11px;
   color: white;
 }
 
@@ -1519,6 +1534,14 @@ h3 {
     justify-content: space-between;
   }
   
+  /* Ensure compact patient info is responsive */
+  .patient-info-compact p {
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: normal;
+    overflow: visible;
+  }
+  
   /* Task filter checkbox responsive styling */
   .task-filter-container {
     width: 100%;
@@ -1769,6 +1792,11 @@ h3 {
   
   .patient-info-container {
     padding: 15px;
+  }
+  
+  /* Ensure compact patient info stays readable on small screens */
+  .patient-info-compact p {
+    font-size: 13px;
   }
   
   .task-actions button, 
