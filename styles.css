@@ -395,6 +395,7 @@ h3 {
   align-items: center;
   padding: 8px 0;
   gap: 12px;
+  cursor: pointer;
 }
 
 .patient-tasks-header h4 {
@@ -804,6 +805,14 @@ h3 {
   margin: 0 5px;
   flex: 1;
   justify-content: center;
+}
+
+.task-separator {
+  color: var(--text-lighter);
+  font-size: 18px;
+  line-height: 18px;
+  margin: 0 5px;
+  opacity: 0.4;
 }
 
 .bloods-button {

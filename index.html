@@ -926,6 +926,7 @@
                                 <h4 class="tasks-toggle">
                                     <i class="fas fa-chevron-right tasks-toggle-icon"></i><span>Tasks</span>
                                 </h4>
+                                <div class="task-separator">|</div>
                                 <div class="task-indicators">
                                     ${taskCounts.urgent > 0 ? 
                                     `<div class="task-indicator" title="${taskCounts.urgent} Urgent">
@@ -948,7 +949,7 @@
                                         <span class="task-count completed">${taskCounts.completed}</span>
                                     </div>` : ''}
                                 </div>
-                                <button class="quick-task-toggle-btn" data-patient-id="${patient.id}">
+                                <button class="quick-task-toggle-btn tasks-clickable" data-patient-id="${patient.id}">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
@@ -1225,8 +1226,13 @@
                 });
             });
             
-            // Add event listener to tasks toggle
-            patientCard.querySelector('.tasks-toggle').addEventListener('click', function() {
+            // Make entire header row toggle tasks
+            patientCard.querySelector('.tasks-header-row').addEventListener('click', function(e) {
+                // Don't trigger if clicking on the add task button specifically
+                if (e.target.closest('.quick-task-toggle-btn') && !e.target.closest('.tasks-clickable')) {
+                    return;
+                }
+                
                 const tasksContainer = this.closest('.patient-tasks-container');
                 tasksContainer.classList.toggle('collapsed');
                 const toggleIcon = this.querySelector('.tasks-toggle-icon');
@@ -1235,6 +1241,19 @@
                     toggleIcon.classList.remove('fa-chevron-down');
                     toggleIcon.classList.add('fa-chevron-right');
                 } else {
+                    toggleIcon.classList.remove('fa-chevron-right');
+                    toggleIcon.classList.add('fa-chevron-down');
+                }
+            });
+            
+            // Add event listener to add task button to also open tasks if collapsed
+            patientCard.querySelector('.quick-task-toggle-btn').addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering the header row click
+                
+                const tasksContainer = this.closest('.patient-tasks-container');
+                if (tasksContainer.classList.contains('collapsed')) {
+                    tasksContainer.classList.remove('collapsed');
+                    const toggleIcon = tasksContainer.querySelector('.tasks-toggle-icon');
                     toggleIcon.classList.remove('fa-chevron-right');
                     toggleIcon.classList.add('fa-chevron-down');
                 }
