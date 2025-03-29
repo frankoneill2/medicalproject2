@@ -1154,27 +1154,39 @@
             const currentStatus = patients[patientIndex].tasks[taskIndex].priority;
             let newStatus;
             
-            // Cycle through statuses: normal → in-progress → completed → normal
+            // Cycle through statuses: normal → in-progress → completed → [delete task]
             if (currentStatus === 'normal') {
                 newStatus = 'in-progress';
                 patients[patientIndex].tasks[taskIndex].progressDate = new Date().toLocaleString();
+                
+                // Update the task priority and save
+                patients[patientIndex].tasks[taskIndex].priority = newStatus;
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Update the button state
+                updateBloodsButtonState(patientId, taskId, newStatus);
             } else if (currentStatus === 'in-progress') {
                 newStatus = 'completed';
                 patients[patientIndex].tasks[taskIndex].completedDate = new Date().toLocaleString();
+                
+                // Update the task priority and save
+                patients[patientIndex].tasks[taskIndex].priority = newStatus;
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Update the button state
+                updateBloodsButtonState(patientId, taskId, newStatus);
             } else if (currentStatus === 'completed') {
-                newStatus = 'normal';
-                delete patients[patientIndex].tasks[taskIndex].completedDate;
-                delete patients[patientIndex].tasks[taskIndex].progressDate;
+                // Delete the task instead of cycling back to normal
+                patients[patientIndex].tasks = patients[patientIndex].tasks.filter(t => t.id !== taskId);
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // Reset the button state
+                const button = document.querySelector(`.bloods-button[data-patient-id="${patientId}"]`);
+                if (button) {
+                    button.classList.remove('normal', 'in-progress', 'completed');
+                    button.removeAttribute('data-task-id');
+                }
             }
-            
-            // Update the task priority
-            patients[patientIndex].tasks[taskIndex].priority = newStatus;
-            
-            // Save changes
-            localStorage.setItem('patients', JSON.stringify(patients));
-            
-            // Update the button state
-            updateBloodsButtonState(patientId, taskId, newStatus);
             
             // Re-render the patient list to show the updated task
             renderPatientList();
