@@ -70,9 +70,6 @@ body {
 
 /* Header Styles */
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -88,6 +85,7 @@ h1 {
   font-size: 28px;
   font-weight: 600;
   letter-spacing: -0.5px;
+  margin: 0;
 }
 
 h1 i, h2 i {
@@ -1942,6 +1940,7 @@ h3 {
   .header-center h1 {
     font-size: 18px;
     white-space: nowrap;
+    margin: 0;
   }
   
   .btn-text {
@@ -2466,24 +2465,32 @@ h3 {
 .header-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.header-table tr {
+  display: table-row;
+}
+
+.header-left, .header-center, .header-right {
+  display: table-cell;
+  vertical-align: middle;
+  padding: 5px;
 }
 
 .header-left {
   width: 25%;
   text-align: left;
-  vertical-align: middle;
 }
 
 .header-center {
   width: 50%;
   text-align: center;
-  vertical-align: middle;
 }
 
 .header-right {
   width: 25%;
   text-align: right;
-  vertical-align: middle;
 }
 
 .logo-container {
