@@ -72,6 +72,16 @@
                                 <span>Completed</span>
                             </label>
                         </div>
+                        <div class="task-type-filter-container">
+                            <label class="task-type-filter-label">
+                                <input type="checkbox" value="all" class="task-type-filter-checkbox" checked>
+                                <span>All Types</span>
+                            </label>
+                            <label class="task-type-filter-label">
+                                <input type="checkbox" value="bloods" class="task-type-filter-checkbox">
+                                <span>Bloods Only</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -854,7 +864,11 @@
                     taskItem.className = `compact-task-item ${task.priority}`;
                     taskItem.innerHTML = `
                         <div class="compact-task-content">
-                            <span class="compact-task-text">${task.text}</span>
+                            <span class="compact-task-text">
+                                ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.text}
+                            </span>
                             <div class="compact-task-actions">
                                 ${task.priority === 'normal' || task.priority === 'urgent' ? 
                                     `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
@@ -907,7 +921,11 @@
                         taskItem.className = `compact-task-item ${task.priority}`;
                         taskItem.innerHTML = `
                             <div class="compact-task-content">
-                                <span class="compact-task-text">${task.text}</span>
+                                <span class="compact-task-text">
+                                    ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.text}
+                                </span>
                                 <div class="compact-task-actions">
                                     ${task.priority === 'normal' || task.priority === 'urgent' ? 
                                         `<button class="compact-task-complete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Mark Complete">
@@ -1123,7 +1141,8 @@
                 priority: "normal",
                 date: new Date().toLocaleString(),
                 targetDate: tomorrowStr,
-                isBloodsTask: true
+                isBloodsTask: true,
+                tags: ["bloods"]  // Add tag to identify task type
             };
             
             // Ensure patient has a tasks array
@@ -1463,7 +1482,11 @@
                     taskItem.className = `task-item ${task.priority}`;
                     taskItem.innerHTML = `
                         <div class="task-content">
-                            <div class="task-text">${task.text}</div>
+                            <div class="task-text">
+                                ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.text}
+                            </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                             <div class="task-date">${task.date}</div>
                         </div>
@@ -1499,7 +1522,11 @@
                     taskItem.className = `task-item in-progress`;
                     taskItem.innerHTML = `
                         <div class="task-content">
-                            <div class="task-text">${task.text}</div>
+                            <div class="task-text">
+                                ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.text}
+                            </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                             <div class="task-date">${task.progressDate || task.date}</div>
                         </div>
@@ -1532,7 +1559,11 @@
                     taskItem.className = `task-item completed`;
                     taskItem.innerHTML = `
                         <div class="task-content">
-                            <div class="task-text">${task.text}</div>
+                            <div class="task-text">
+                                ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.text}
+                            </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                             <div class="task-date">${task.completedDate || task.date}</div>
                         </div>
@@ -2147,7 +2178,7 @@
         }
         
         // Function to render all tasks
-        function renderAllTasks(filters = ['normal', 'urgent', 'in-progress', 'completed'], searchTerm = '') {
+        function renderAllTasks(filters = ['normal', 'urgent', 'in-progress', 'completed'], searchTerm = '', taskTypeFilter = 'all') {
             allTasksContainer.innerHTML = '';
             
             // Group tasks by ward and completion status
@@ -2177,6 +2208,15 @@
                             if (!filters.includes(task.priority)) return;
                         } else if (!filters.includes(task.priority)) {
                             // For other priorities, check exact match
+                            return;
+                        }
+                    }
+                    
+                    // Apply task type filter
+                    if (taskTypeFilter === 'bloods') {
+                        // Only include bloods tasks
+                        if (!(task.isBloodsTask || (task.tags && task.tags.includes('bloods')) || 
+                              task.text.toLowerCase().includes('blood'))) {
                             return;
                         }
                     }
@@ -2472,6 +2512,13 @@
                 // Set or update isBloodsTask property if relevant
                 if (text.toLowerCase().includes("blood")) {
                     task.isBloodsTask = true;
+                    
+                    // Add the bloods tag if missing
+                    if (!task.tags) {
+                        task.tags = ["bloods"];
+                    } else if (!task.tags.includes("bloods")) {
+                        task.tags.push("bloods");
+                    }
                 }
                 
                 // If this is a bloods task and the button exists on the patient card, update its state
@@ -2829,12 +2876,62 @@
                     }
                 });
                 
-                renderAllTasks(selectedFilters, searchTerm);
+                // Get task type filter
+                const taskTypeFilters = document.querySelectorAll('.task-type-filter-checkbox:checked');
+                let taskTypeFilter = 'all';
+                
+                if (taskTypeFilters.length > 0) {
+                    const checkedTypeFilter = taskTypeFilters[0];
+                    taskTypeFilter = checkedTypeFilter.value;
+                }
+                
+                renderAllTasks(selectedFilters, searchTerm, taskTypeFilter);
+            });
+        });
+        
+        // Event listeners for task type filter checkboxes
+        document.querySelectorAll('.task-type-filter-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const searchTerm = taskSearch.value.trim();
+                
+                // Get all selected task status filter values
+                const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
+                    .map(cb => cb.value);
+                
+                // Make sure only one task type filter is selected at a time
+                if (this.checked) {
+                    document.querySelectorAll('.task-type-filter-checkbox').forEach(cb => {
+                        if (cb !== this) {
+                            cb.checked = false;
+                            cb.closest('.task-type-filter-label').classList.remove('selected');
+                        }
+                    });
+                    
+                    this.closest('.task-type-filter-label').classList.add('selected');
+                } else {
+                    // If unchecking, check the "All Types" filter
+                    document.querySelector('.task-type-filter-checkbox[value="all"]').checked = true;
+                    document.querySelector('.task-type-filter-checkbox[value="all"]').closest('.task-type-filter-label').classList.add('selected');
+                    this.closest('.task-type-filter-label').classList.remove('selected');
+                }
+                
+                // Get the selected task type filter
+                const taskTypeFilter = this.checked ? this.value : 'all';
+                
+                renderAllTasks(selectedFilters, searchTerm, taskTypeFilter);
             });
         });
         
         // Initialize selected state for labels
         document.querySelectorAll('.task-filter-label').forEach(label => {
+            const cb = label.querySelector('input[type="checkbox"]');
+            if (cb.checked) {
+                label.classList.add('selected');
+            }
+        });
+        
+        // Initialize selected state for task type filter labels
+        document.querySelectorAll('.task-type-filter-label').forEach(label => {
             const cb = label.querySelector('input[type="checkbox"]');
             if (cb.checked) {
                 label.classList.add('selected');
@@ -2848,8 +2945,17 @@
             // Get all selected filter values
             const selectedFilters = Array.from(document.querySelectorAll('.task-filter-checkbox:checked'))
                 .map(cb => cb.value);
+            
+            // Get task type filter
+            const taskTypeFilters = document.querySelectorAll('.task-type-filter-checkbox:checked');
+            let taskTypeFilter = 'all';
+            
+            if (taskTypeFilters.length > 0) {
+                const checkedTypeFilter = taskTypeFilters[0];
+                taskTypeFilter = checkedTypeFilter.value;
+            }
                 
-            renderAllTasks(selectedFilters, searchTerm);
+            renderAllTasks(selectedFilters, searchTerm, taskTypeFilter);
         });
         
         // Add event listeners for delete buttons in the all tasks view
