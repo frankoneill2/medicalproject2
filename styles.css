@@ -391,7 +391,19 @@ h3 {
 
 .quick-task-actions {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.quick-task-selects {
+  display: flex;
   justify-content: space-between;
+  gap: 5px;
+}
+
+.quick-task-buttons {
+  display: flex;
+  justify-content: flex-end;
   gap: 5px;
 }
 
@@ -974,6 +986,11 @@ h3 {
 }
 
 .priority-select-container {
+  width: 120px;
+  margin-bottom: 0;
+}
+
+.type-select-container {
   width: 140px;
   margin-bottom: 0;
 }

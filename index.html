@@ -227,6 +227,15 @@
                                         <option value="completed">Completed</option>
                                     </select>
                                 </div>
+                                <div class="form-group type-select-container">
+                                    <select id="task-type" class="styled-select">
+                                        <option value="none">No Type</option>
+                                        <option value="investigation">Investigation</option>
+                                        <option value="bloods">Bloods</option>
+                                        <option value="imaging">Imaging</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
                                 <button type="submit" class="primary-btn">Add Task</button>
                             </div>
                             <div class="task-description-container">
@@ -398,6 +407,16 @@
                             <option value="urgent">Urgent</option>
                             <option value="in-progress">In Progress</option>
                             <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-task-type">Task Type</label>
+                        <select id="edit-task-type" class="styled-select">
+                            <option value="none">No Type</option>
+                            <option value="investigation">Investigation</option>
+                            <option value="bloods">Bloods</option>
+                            <option value="imaging">Imaging</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -694,6 +713,7 @@
         const editTaskText = document.getElementById('edit-task-text');
         const editTaskDescription = document.getElementById('edit-task-description');
         const editTaskPriority = document.getElementById('edit-task-priority');
+        const editTaskType = document.getElementById('edit-task-type');
         let currentEditingTaskId = null;
         
         // Get main tab elements
@@ -846,16 +866,27 @@
                             <form class="quick-task-form hidden" data-patient-id="${patient.id}">
                                 <input type="text" class="quick-task-input" placeholder="Add new task..." required>
                                 <div class="quick-task-actions">
-                                    <select class="quick-task-priority">
-                                        <option value="normal">Normal</option>
-                                        <option value="urgent">Urgent</option>
-                                    </select>
-                                    <button type="submit" class="quick-task-add-btn">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="button" class="quick-task-cancel-btn">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <div class="quick-task-selects">
+                                        <select class="quick-task-priority">
+                                            <option value="normal">Normal</option>
+                                            <option value="urgent">Urgent</option>
+                                        </select>
+                                        <select class="quick-task-type">
+                                            <option value="none">No Type</option>
+                                            <option value="investigation">Investigation</option>
+                                            <option value="bloods">Bloods</option>
+                                            <option value="imaging">Imaging</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="quick-task-buttons">
+                                        <button type="submit" class="quick-task-add-btn">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="quick-task-cancel-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -1065,9 +1096,10 @@
                         const patientId = this.getAttribute('data-patient-id');
                         const taskText = this.querySelector('.quick-task-input').value.trim();
                         const taskPriority = this.querySelector('.quick-task-priority').value;
+                        const taskType = this.querySelector('.quick-task-type').value;
                         
                         if (taskText) {
-                            addTaskFromCard(patientId, taskText, taskPriority);
+                            addTaskFromCard(patientId, taskText, taskPriority, taskType);
                             this.querySelector('.quick-task-input').value = '';
                             this.classList.add('hidden');
                             quickTaskToggleBtn.classList.remove('hidden');
@@ -1826,6 +1858,7 @@
             const text = taskInput.value.trim();
             const description = taskDescriptionInput.value.trim();
             const priority = taskPriority.value;
+            const taskType = document.getElementById('task-type').value;
             
             if (text && currentPatientId) {
                 const patientIndex = patients.findIndex(p => p.id === currentPatientId);
@@ -1837,15 +1870,34 @@
                     text,
                     description,
                     priority,
-                    date: new Date().toLocaleString()
+                    date: new Date().toLocaleString(),
+                    tags: []
                 };
                 
                 if (!patients[patientIndex].tasks) {
                     patients[patientIndex].tasks = [];
                 }
                 
-                // Check if this is a blood or imaging task but doesn't have the investigation tag
-                if (text.toLowerCase().includes('blood') || 
+                // Handle task type from selection
+                if (taskType !== 'none') {
+                    // Add tags based on selected type
+                    if (taskType === 'investigation' || taskType === 'bloods' || taskType === 'imaging' || taskType === 'other') {
+                        if (!newTask.tags.includes('investigation')) {
+                            newTask.tags.push('investigation');
+                        }
+                        
+                        if (taskType !== 'investigation') {
+                            newTask.tags.push(taskType);
+                        }
+                        
+                        // Set isBloodsTask for bloods
+                        if (taskType === 'bloods') {
+                            newTask.isBloodsTask = true;
+                        }
+                    }
+                } 
+                // Auto-detect type from text if no type was selected
+                else if (text.toLowerCase().includes('blood') || 
                     text.toLowerCase().includes('xray') || 
                     text.toLowerCase().includes('x-ray') || 
                     text.toLowerCase().includes('ultrasound') || 
@@ -1853,20 +1905,21 @@
                     text.toLowerCase().includes('mri') || 
                     text.toLowerCase().includes('scan')) {
                     
-                    // Initialize tags array if it doesn't exist
-                    if (!newTask.tags) {
-                        newTask.tags = ["investigation"];
-                        
-                        // Add specific tag based on content
-                        if (text.toLowerCase().includes('blood')) {
-                            newTask.tags.push("bloods");
-                            newTask.isBloodsTask = true;
-                        } else {
-                            newTask.tags.push("imaging");
+                    // Add investigation tag
+                    if (!newTask.tags.includes('investigation')) {
+                        newTask.tags.push('investigation');
+                    }
+                    
+                    // Add specific tag based on content
+                    if (text.toLowerCase().includes('blood')) {
+                        if (!newTask.tags.includes('bloods')) {
+                            newTask.tags.push('bloods');
                         }
-                    } else if (!newTask.tags.includes("investigation")) {
-                        // Add investigation tag if missing
-                        newTask.tags.push("investigation");
+                        newTask.isBloodsTask = true;
+                    } else {
+                        if (!newTask.tags.includes('imaging')) {
+                            newTask.tags.push('imaging');
+                        }
                     }
                 }
                 
@@ -1877,6 +1930,7 @@
                 taskInput.value = '';
                 taskDescriptionInput.value = '';
                 taskPriority.value = 'normal';
+                document.getElementById('task-type').value = 'none';
                 
                 // Hide the description if it's expanded
                 const descriptionContainer = document.querySelector('.task-description-container');
@@ -2566,6 +2620,23 @@
             editTaskDescription.value = task.description || '';
             editTaskPriority.value = task.priority;
             
+            // Set task type based on tags
+            if (task.tags && task.tags.length > 0) {
+                if (task.tags.includes('bloods')) {
+                    editTaskType.value = 'bloods';
+                } else if (task.tags.includes('imaging')) {
+                    editTaskType.value = 'imaging';
+                } else if (task.tags.includes('other')) {
+                    editTaskType.value = 'other';
+                } else if (task.tags.includes('investigation')) {
+                    editTaskType.value = 'investigation';
+                } else {
+                    editTaskType.value = 'none';
+                }
+            } else {
+                editTaskType.value = 'none';
+            }
+            
             // Update modal title for bloods task
             const modalTitle = document.querySelector('#task-edit-modal h2');
             if (task.isBloodsTask || task.text.toLowerCase().includes("blood")) {
@@ -2591,6 +2662,7 @@
             const text = editTaskText.value.trim();
             const description = editTaskDescription.value.trim();
             const priority = editTaskPriority.value;
+            const taskType = editTaskType.value;
             
             if (text && currentPatientId && currentEditingTaskId) {
                 const patientIndex = patients.findIndex(p => p.id === currentPatientId);
@@ -2608,46 +2680,79 @@
                 task.description = description;
                 task.priority = priority;
                 
-                // Set or update isBloodsTask property if relevant
-                // Handle blood tests
-                if (text.toLowerCase().includes("blood")) {
+                // Initialize tags array if it doesn't exist
+                if (!task.tags) {
+                    task.tags = [];
+                }
+                
+                // Handle task type from dropdown
+                if (taskType !== 'none') {
+                    // First, reset any existing categorization
+                    task.tags = task.tags.filter(tag => 
+                        tag !== 'investigation' && 
+                        tag !== 'bloods' && 
+                        tag !== 'imaging' && 
+                        tag !== 'other'
+                    );
+                    
+                    // Set isBloodsTask to false by default unless needed
+                    if (taskType !== 'bloods') {
+                        task.isBloodsTask = false;
+                    }
+                    
+                    // Add new tags based on selection
+                    if (taskType === 'investigation' || taskType === 'bloods' || taskType === 'imaging' || taskType === 'other') {
+                        task.tags.push('investigation');
+                        
+                        if (taskType !== 'investigation') {
+                            task.tags.push(taskType);
+                            
+                            // Set isBloodsTask for bloods
+                            if (taskType === 'bloods') {
+                                task.isBloodsTask = true;
+                            }
+                        }
+                    }
+                } 
+                // If "none" was selected, remove all type tags
+                else if (taskType === 'none') {
+                    task.tags = task.tags.filter(tag => 
+                        tag !== 'investigation' && 
+                        tag !== 'bloods' && 
+                        tag !== 'imaging' && 
+                        tag !== 'other'
+                    );
+                    task.isBloodsTask = false;
+                }
+                
+                // Auto-detect if no type was selected but text suggests a specific type
+                if (taskType === 'none' && text.toLowerCase().includes("blood")) {
                     task.isBloodsTask = true;
                     
-                    // Initialize tags array if it doesn't exist
-                    if (!task.tags) {
-                        task.tags = ["investigation", "bloods"];
-                    } else {
-                        // Add investigation tag if missing
-                        if (!task.tags.includes("investigation")) {
-                            task.tags.push("investigation");
-                        }
-                        // Add bloods tag if missing
-                        if (!task.tags.includes("bloods")) {
-                            task.tags.push("bloods");
-                        }
+                    // Only auto-tag if no type was explicitly selected
+                    if (!task.tags.includes("investigation")) {
+                        task.tags.push("investigation");
+                    }
+                    if (!task.tags.includes("bloods")) {
+                        task.tags.push("bloods");
                     }
                 }
                 
-                // Handle imaging tasks
-                if (text.toLowerCase().includes("xray") || 
+                // Auto-detect imaging if no type was selected
+                if (taskType === 'none' && (
+                    text.toLowerCase().includes("xray") || 
                     text.toLowerCase().includes("x-ray") || 
                     text.toLowerCase().includes("ultrasound") || 
                     text.toLowerCase().includes("ct") || 
                     text.toLowerCase().includes("mri") || 
-                    text.toLowerCase().includes("scan")) {
+                    text.toLowerCase().includes("scan"))) {
                     
-                    // Initialize tags array if it doesn't exist
-                    if (!task.tags) {
-                        task.tags = ["investigation", "imaging"];
-                    } else {
-                        // Add investigation tag if missing
-                        if (!task.tags.includes("investigation")) {
-                            task.tags.push("investigation");
-                        }
-                        // Add imaging tag if missing
-                        if (!task.tags.includes("imaging")) {
-                            task.tags.push("imaging");
-                        }
+                    // Only auto-tag if no type was explicitly selected
+                    if (!task.tags.includes("investigation")) {
+                        task.tags.push("investigation");
+                    }
+                    if (!task.tags.includes("imaging")) {
+                        task.tags.push("imaging");
                     }
                 }
                 
@@ -3207,7 +3312,7 @@
         // Task management functions for the patient card
         
         // Function to add a task from the patient card
-        function addTaskFromCard(patientId, taskText, taskPriority) {
+        function addTaskFromCard(patientId, taskText, taskPriority, taskType = 'none') {
             const patientIndex = patients.findIndex(p => p.id === patientId);
             if (patientIndex === -1) return;
             
@@ -3216,7 +3321,8 @@
                 id: Date.now(),
                 text: taskText,
                 priority: taskPriority,
-                date: new Date().toLocaleString()
+                date: new Date().toLocaleString(),
+                tags: []
             };
             
             // Ensure patient has a tasks array
@@ -3224,8 +3330,26 @@
                 patients[patientIndex].tasks = [];
             }
             
-            // Check if this is a blood or imaging task but doesn't have the investigation tag
-            if (taskText.toLowerCase().includes('blood') || 
+            // Handle task type from selection
+            if (taskType !== 'none') {
+                // Add tags based on selected type
+                if (taskType === 'investigation' || taskType === 'bloods' || taskType === 'imaging' || taskType === 'other') {
+                    if (!newTask.tags.includes('investigation')) {
+                        newTask.tags.push('investigation');
+                    }
+                    
+                    if (taskType !== 'investigation') {
+                        newTask.tags.push(taskType);
+                    }
+                    
+                    // Set isBloodsTask for bloods
+                    if (taskType === 'bloods') {
+                        newTask.isBloodsTask = true;
+                    }
+                }
+            } 
+            // Auto-detect type from text if no type was selected
+            else if (taskText.toLowerCase().includes('blood') || 
                 taskText.toLowerCase().includes('xray') || 
                 taskText.toLowerCase().includes('x-ray') || 
                 taskText.toLowerCase().includes('ultrasound') || 
@@ -3233,20 +3357,21 @@
                 taskText.toLowerCase().includes('mri') || 
                 taskText.toLowerCase().includes('scan')) {
                 
-                // Initialize tags array if it doesn't exist
-                if (!newTask.tags) {
-                    newTask.tags = ["investigation"];
-                    
-                    // Add specific tag based on content
-                    if (taskText.toLowerCase().includes('blood')) {
-                        newTask.tags.push("bloods");
-                        newTask.isBloodsTask = true;
-                    } else {
-                        newTask.tags.push("imaging");
+                // Add investigation tag
+                if (!newTask.tags.includes('investigation')) {
+                    newTask.tags.push('investigation');
+                }
+                
+                // Add specific tag based on content
+                if (taskText.toLowerCase().includes('blood')) {
+                    if (!newTask.tags.includes('bloods')) {
+                        newTask.tags.push('bloods');
                     }
-                } else if (!newTask.tags.includes("investigation")) {
-                    // Add investigation tag if missing
-                    newTask.tags.push("investigation");
+                    newTask.isBloodsTask = true;
+                } else {
+                    if (!newTask.tags.includes('imaging')) {
+                        newTask.tags.push('imaging');
+                    }
                 }
             }
             
@@ -3365,6 +3490,23 @@
             editTaskText.value = task.text;
             editTaskDescription.value = task.description || '';
             editTaskPriority.value = task.priority;
+            
+            // Set task type based on tags
+            if (task.tags && task.tags.length > 0) {
+                if (task.tags.includes('bloods')) {
+                    editTaskType.value = 'bloods';
+                } else if (task.tags.includes('imaging')) {
+                    editTaskType.value = 'imaging';
+                } else if (task.tags.includes('other')) {
+                    editTaskType.value = 'other';
+                } else if (task.tags.includes('investigation')) {
+                    editTaskType.value = 'investigation';
+                } else {
+                    editTaskType.value = 'none';
+                }
+            } else {
+                editTaskType.value = 'none';
+            }
             
             // Update modal title for bloods task
             const modalTitle = document.querySelector('#task-edit-modal h2');
