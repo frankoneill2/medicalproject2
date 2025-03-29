@@ -213,13 +213,18 @@
                 
                 <!-- Tasks Tab Content -->
                 <div id="tasks-tab" class="tab-content active">
-                    <div class="note-form">
+                    <div class="note-form enhanced-task-form">
+                        <h3 class="task-form-title"><i class="fas fa-clipboard-check"></i> Add New Task</h3>
                         <form id="task-form" class="task-add-form">
                             <div class="form-row task-main-row">
                                 <div class="form-group task-input-container">
-                                    <input type="text" id="task-input" placeholder="Add new task title..." class="styled-input" required>
+                                    <label for="task-input">Task Title</label>
+                                    <input type="text" id="task-input" placeholder="Enter task title here..." class="styled-input" required>
                                 </div>
+                            </div>
+                            <div class="form-row task-options-row">
                                 <div class="form-group priority-select-container">
+                                    <label for="task-priority">Priority</label>
                                     <select id="task-priority" class="styled-select">
                                         <option value="normal">Normal</option>
                                         <option value="urgent">Urgent</option>
@@ -228,6 +233,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group type-select-container">
+                                    <label for="task-type">Type</label>
                                     <select id="task-type" class="styled-select">
                                         <option value="none">No Type</option>
                                         <option value="investigation">Investigation</option>
@@ -236,17 +242,20 @@
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <button type="submit" class="primary-btn">Add Task</button>
                             </div>
                             <div class="task-description-container">
                                 <div class="form-group">
-                                    <textarea id="task-description-input" placeholder="Add optional description..." rows="2" class="styled-textarea"></textarea>
+                                    <label for="task-description-input">Description (Optional)</label>
+                                    <textarea id="task-description-input" placeholder="Add more details about this task..." rows="3" class="styled-textarea"></textarea>
                                 </div>
-                                <div class="task-form-toggle">
-                                    <button type="button" id="toggle-task-details" class="toggle-details-btn">
-                                        <i class="fas fa-chevron-down"></i> <span>Add description</span>
-                                    </button>
-                                </div>
+                            </div>
+                            <div class="task-form-actions">
+                                <button type="button" id="toggle-task-details" class="toggle-details-btn">
+                                    <i class="fas fa-chevron-down"></i> <span>Description</span>
+                                </button>
+                                <button type="submit" class="primary-btn">
+                                    <i class="fas fa-plus"></i> Add Task
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -901,10 +910,10 @@
                 </div>
             `;
             
+            const tasksList = patientCard.querySelector('.patient-tasks-list');
+            
             // If there are tasks, add them to the task list
             if (allTasks.length > 0) {
-                const tasksList = patientCard.querySelector('.patient-tasks-list');
-                
                 // First, add the visible tasks (up to 3)
                 const visibleTasks = allTasks.slice(0, 3);
                 visibleTasks.forEach(task => {
@@ -1073,51 +1082,57 @@
                         deleteTaskFromCard(patientId, taskId);
                     });
                 });
+            } else {
+                // Add "no tasks" message for empty task list
+                const noTasksMessage = document.createElement('p');
+                noTasksMessage.className = 'no-tasks-message';
+                noTasksMessage.textContent = 'No tasks for this patient';
+                tasksList.appendChild(noTasksMessage);
+            }
+            
+            // Add event listener for the quick task toggle button - moved outside of allTasks.length condition
+            const quickTaskToggleBtn = patientCard.querySelector('.quick-task-toggle-btn');
+            const quickTaskForm = patientCard.querySelector('.quick-task-form');
+            
+            if (quickTaskToggleBtn && quickTaskForm) {
+                // Show form when toggle button is clicked
+                quickTaskToggleBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const patientId = this.getAttribute('data-patient-id');
+                    quickTaskForm.classList.remove('hidden');
+                    quickTaskForm.querySelector('.quick-task-input').focus();
+                    this.classList.add('hidden');
+                });
                 
-                // Add event listener for the quick task toggle button
-                const quickTaskToggleBtn = patientCard.querySelector('.quick-task-toggle-btn');
-                const quickTaskForm = patientCard.querySelector('.quick-task-form');
-                
-                if (quickTaskToggleBtn && quickTaskForm) {
-                    // Show form when toggle button is clicked
-                    quickTaskToggleBtn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const patientId = this.getAttribute('data-patient-id');
-                        quickTaskForm.classList.remove('hidden');
-                        quickTaskForm.querySelector('.quick-task-input').focus();
-                        this.classList.add('hidden');
-                    });
+                // Handle form submission
+                quickTaskForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    // Handle form submission
-                    quickTaskForm.addEventListener('submit', function(e) {
+                    const patientId = this.getAttribute('data-patient-id');
+                    const taskText = this.querySelector('.quick-task-input').value.trim();
+                    const taskPriority = this.querySelector('.quick-task-priority').value;
+                    const taskType = this.querySelector('.quick-task-type').value;
+                    
+                    if (taskText) {
+                        addTaskFromCard(patientId, taskText, taskPriority, taskType);
+                        this.querySelector('.quick-task-input').value = '';
+                        this.classList.add('hidden');
+                        quickTaskToggleBtn.classList.remove('hidden');
+                    }
+                });
+                
+                // Handle cancel button click
+                const cancelBtn = quickTaskForm.querySelector('.quick-task-cancel-btn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        const patientId = this.getAttribute('data-patient-id');
-                        const taskText = this.querySelector('.quick-task-input').value.trim();
-                        const taskPriority = this.querySelector('.quick-task-priority').value;
-                        const taskType = this.querySelector('.quick-task-type').value;
-                        
-                        if (taskText) {
-                            addTaskFromCard(patientId, taskText, taskPriority, taskType);
-                            this.querySelector('.quick-task-input').value = '';
-                            this.classList.add('hidden');
-                            quickTaskToggleBtn.classList.remove('hidden');
-                        }
+                        quickTaskForm.classList.add('hidden');
+                        quickTaskForm.querySelector('.quick-task-input').value = '';
+                        quickTaskToggleBtn.classList.remove('hidden');
                     });
-                    
-                    // Handle cancel button click
-                    const cancelBtn = quickTaskForm.querySelector('.quick-task-cancel-btn');
-                    if (cancelBtn) {
-                        cancelBtn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            quickTaskForm.classList.add('hidden');
-                            quickTaskForm.querySelector('.quick-task-input').value = '';
-                            quickTaskToggleBtn.classList.remove('hidden');
-                        });
-                    }
                 }
             }
             
@@ -2954,11 +2969,17 @@
             descriptionContainer.classList.toggle('expanded');
             toggleTaskDetailsBtn.classList.toggle('active');
             
+            const icon = toggleTaskDetailsBtn.querySelector('i');
             const buttonText = toggleTaskDetailsBtn.querySelector('span');
+            
             if (descriptionContainer.classList.contains('expanded')) {
-                buttonText.textContent = 'Hide description';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                buttonText.textContent = 'Hide Description';
             } else {
-                buttonText.textContent = 'Add description';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                buttonText.textContent = 'Description';
             }
         }
         
