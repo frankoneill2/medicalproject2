@@ -1553,8 +1553,11 @@
                     taskItem.innerHTML = `
                         <div class="task-content">
                             <div class="task-text">
+                                ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
                                 ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
                                 ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
                                 ${task.text}
                             </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
@@ -1593,8 +1596,11 @@
                     taskItem.innerHTML = `
                         <div class="task-content">
                             <div class="task-text">
+                                ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
                                 ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
                                 ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
                                 ${task.text}
                             </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
@@ -1630,8 +1636,11 @@
                     taskItem.innerHTML = `
                         <div class="task-content">
                             <div class="task-text">
+                                ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
                                 ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
                                 ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
                                 ${task.text}
                             </div>
                             ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
@@ -2458,7 +2467,14 @@
                         taskItem.className = `task-item ${task.priority}`;
                         taskItem.innerHTML = `
                             <div class="task-content">
-                                <div class="task-text">${task.text}</div>
+                                <div class="task-text">
+                                    ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
+                                    ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                    ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
+                                    ${task.text}
+                                </div>
                                 <div class="task-meta">
                                     <span class="task-patient">
                                         <i class="fas fa-user"></i> ${task.patientName} (${task.patientId})
@@ -2513,7 +2529,14 @@
                         taskItem.className = `task-item in-progress`;
                         taskItem.innerHTML = `
                             <div class="task-content">
-                                <div class="task-text">${task.text}</div>
+                                <div class="task-text">
+                                    ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
+                                    ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                    ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
+                                    ${task.text}
+                                </div>
                                 <div class="task-meta">
                                     <span class="task-patient">
                                         <i class="fas fa-user"></i> ${task.patientName} (${task.patientId})
@@ -2565,7 +2588,14 @@
                         taskItem.className = `task-item ${task.priority}`;
                         taskItem.innerHTML = `
                             <div class="task-content">
-                                <div class="task-text">${task.text}</div>
+                                <div class="task-text">
+                                    ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
+                                    ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                    ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
+                                    ${task.text}
+                                </div>
                                 <div class="task-meta">
                                     <span class="task-patient">
                                         <i class="fas fa-user"></i> ${task.patientName} (${task.patientId})
