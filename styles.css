@@ -1656,8 +1656,8 @@ h3 {
   }
   
   .header-logo {
-    height: 30px;
-    max-width: 120px;
+    height: 20px;
+    max-width: 80px;
   }
   
   .header-actions {
@@ -1923,8 +1923,8 @@ h3 {
   }
   
   .header-logo {
-    height: 25px;
-    max-width: 100px;
+    height: 18px;
+    max-width: 60px;
   }
   
   .patient-info-container {
@@ -2440,9 +2440,9 @@ h3 {
 }
 
 .header-logo {
-  height: 50px;
+  height: 40px;
   width: auto;
-  max-width: 200px;
+  max-width: 150px;
   object-fit: contain;
 }
 
