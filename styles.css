@@ -128,6 +128,7 @@ h3 {
   padding: 10px 20px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
   margin-left: auto;
+  float: right;
 }
 
 .primary-btn i {
@@ -2481,6 +2482,7 @@ h3 {
 .header-left {
   width: 25%;
   text-align: left;
+  padding-left: 0;
 }
 
 .header-center {
@@ -2491,6 +2493,7 @@ h3 {
 .header-right {
   width: 25%;
   text-align: right;
+  padding-right: 0;
 }
 
 .logo-container {
