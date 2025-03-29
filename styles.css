@@ -124,6 +124,14 @@ h3 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.modern-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  border-radius: 25px;
+  padding: 10px 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  margin-left: auto;
+}
+
 .primary-btn i {
   margin-right: 8px;
 }
@@ -1645,10 +1653,17 @@ h3 {
   }
   
   .title-section {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     width: 100%;
     gap: 10px;
+  }
+  
+  .modern-btn {
+    margin: 0;
+    margin-left: 10px;
   }
   
   .logo-container {
@@ -1925,6 +1940,24 @@ h3 {
   .header-logo {
     max-height: 12px;
     max-width: 30px;
+  }
+  
+  .btn-text {
+    display: none;
+  }
+  
+  .modern-btn {
+    padding: 8px 8px;
+    height: 36px;
+    width: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .modern-btn i {
+    margin-right: 0;
+    font-size: 16px;
   }
   
   .patient-info-container {
@@ -2432,6 +2465,8 @@ h3 {
   display: flex;
   align-items: center;
   gap: 20px;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .logo-container {
