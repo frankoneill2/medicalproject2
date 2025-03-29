@@ -1844,6 +1844,32 @@
                     patients[patientIndex].tasks = [];
                 }
                 
+                // Check if this is a blood or imaging task but doesn't have the investigation tag
+                if (text.toLowerCase().includes('blood') || 
+                    text.toLowerCase().includes('xray') || 
+                    text.toLowerCase().includes('x-ray') || 
+                    text.toLowerCase().includes('ultrasound') || 
+                    text.toLowerCase().includes('ct') || 
+                    text.toLowerCase().includes('mri') || 
+                    text.toLowerCase().includes('scan')) {
+                    
+                    // Initialize tags array if it doesn't exist
+                    if (!newTask.tags) {
+                        newTask.tags = ["investigation"];
+                        
+                        // Add specific tag based on content
+                        if (text.toLowerCase().includes('blood')) {
+                            newTask.tags.push("bloods");
+                            newTask.isBloodsTask = true;
+                        } else {
+                            newTask.tags.push("imaging");
+                        }
+                    } else if (!newTask.tags.includes("investigation")) {
+                        // Add investigation tag if missing
+                        newTask.tags.push("investigation");
+                    }
+                }
+                
                 patients[patientIndex].tasks.push(newTask);
                 localStorage.setItem('patients', JSON.stringify(patients));
                 
@@ -2239,7 +2265,19 @@
                     if (taskTypeFilter !== 'all') {
                         // Handle investigation (parent category)
                         if (taskTypeFilter === 'investigation') {
-                            if (!(task.tags && task.tags.includes('investigation'))) {
+                            if (!(
+                                (task.tags && task.tags.includes('investigation')) ||
+                                (task.tags && task.tags.includes('bloods')) ||
+                                (task.isBloodsTask) ||
+                                (task.tags && task.tags.includes('imaging')) ||
+                                task.text.toLowerCase().includes('blood') ||
+                                task.text.toLowerCase().includes('xray') || 
+                                task.text.toLowerCase().includes('x-ray') || 
+                                task.text.toLowerCase().includes('ultrasound') || 
+                                task.text.toLowerCase().includes('ct') || 
+                                task.text.toLowerCase().includes('mri') || 
+                                task.text.toLowerCase().includes('scan')
+                            )) {
                                 return;
                             }
                         }
@@ -3184,6 +3222,32 @@
             // Ensure patient has a tasks array
             if (!patients[patientIndex].tasks) {
                 patients[patientIndex].tasks = [];
+            }
+            
+            // Check if this is a blood or imaging task but doesn't have the investigation tag
+            if (taskText.toLowerCase().includes('blood') || 
+                taskText.toLowerCase().includes('xray') || 
+                taskText.toLowerCase().includes('x-ray') || 
+                taskText.toLowerCase().includes('ultrasound') || 
+                taskText.toLowerCase().includes('ct') || 
+                taskText.toLowerCase().includes('mri') || 
+                taskText.toLowerCase().includes('scan')) {
+                
+                // Initialize tags array if it doesn't exist
+                if (!newTask.tags) {
+                    newTask.tags = ["investigation"];
+                    
+                    // Add specific tag based on content
+                    if (taskText.toLowerCase().includes('blood')) {
+                        newTask.tags.push("bloods");
+                        newTask.isBloodsTask = true;
+                    } else {
+                        newTask.tags.push("imaging");
+                    }
+                } else if (!newTask.tags.includes("investigation")) {
+                    // Add investigation tag if missing
+                    newTask.tags.push("investigation");
+                }
             }
             
             // Add the new task
