@@ -1656,8 +1656,8 @@ h3 {
   }
   
   .header-logo {
-    height: 40px;
-    max-width: 180px;
+    height: 30px;
+    max-width: 120px;
   }
   
   .header-actions {
@@ -1920,6 +1920,11 @@ h3 {
 @media (max-width: 480px) {
   .title-section h1 {
     font-size: 20px;
+  }
+  
+  .header-logo {
+    height: 25px;
+    max-width: 100px;
   }
   
   .patient-info-container {
