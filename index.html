@@ -779,6 +779,9 @@
                 <div class="patient-card-content">
                     <div class="patient-header">
                         <h3 class="patient-name">${patient.name}</h3>
+                        <button class="bloods-button" data-patient-id="${patient.id}" title="Toggle bloods task for tomorrow">
+                            <i class="fas fa-vial"></i>
+                        </button>
                     </div>
                     <div class="patient-info">
                         <p><span class="info-label">Hospital #:</span> ${patient.id}</p>
@@ -1036,7 +1039,145 @@
                 showPatientDetails(patientId);
             });
             
+            // Add event listener to bloods button
+            const bloodsButton = patientCard.querySelector('.bloods-button');
+            if (bloodsButton) {
+                // Check if there's already a bloods task for tomorrow
+                const bloodsTask = findBloodsTaskForTomorrow(patient);
+                
+                // Update button state based on existing task
+                if (bloodsTask) {
+                    bloodsButton.classList.add(bloodsTask.priority);
+                    bloodsButton.setAttribute('data-task-id', bloodsTask.id);
+                }
+                
+                // Add click event listener
+                bloodsButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const patientId = this.getAttribute('data-patient-id');
+                    const taskId = this.getAttribute('data-task-id');
+                    
+                    if (taskId) {
+                        // Task exists, toggle its status
+                        toggleBloodsTaskStatus(patientId, parseInt(taskId));
+                    } else {
+                        // Create new task
+                        createBloodsTask(patientId);
+                    }
+                });
+            }
+            
             return patientCard;
+        }
+        
+        // Helper functions for the bloods button feature
+        function findBloodsTaskForTomorrow(patient) {
+            if (!patient.tasks || !patient.tasks.length) {
+                return null;
+            }
+            
+            // Get tomorrow's date in YYYY-MM-DD format
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            
+            // Find a task with "bloods for tomorrow" or similar text
+            const bloodsTask = patient.tasks.find(task => 
+                task.text.toLowerCase().includes("blood") && 
+                (task.targetDate === tomorrowStr || task.text.toLowerCase().includes("tomorrow"))
+            );
+            
+            return bloodsTask || null;
+        }
+        
+        function createBloodsTask(patientId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            // Get tomorrow's date in YYYY-MM-DD format
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            
+            // Create new task
+            const taskId = Date.now();
+            const newTask = {
+                id: taskId,
+                text: "Bloods for tomorrow",
+                description: "Patient needs blood tests for tomorrow. Click to add specific tests required.",
+                priority: "normal",
+                date: new Date().toLocaleString(),
+                targetDate: tomorrowStr,
+                isBloodsTask: true
+            };
+            
+            // Ensure patient has a tasks array
+            if (!patients[patientIndex].tasks) {
+                patients[patientIndex].tasks = [];
+            }
+            
+            // Add the new task
+            patients[patientIndex].tasks.push(newTask);
+            
+            // Save changes
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Update the button state
+            updateBloodsButtonState(patientId, taskId, "normal");
+            
+            // Re-render the patient list to show the updated task
+            renderPatientList();
+        }
+        
+        function toggleBloodsTaskStatus(patientId, taskId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            const taskIndex = patients[patientIndex].tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            const currentStatus = patients[patientIndex].tasks[taskIndex].priority;
+            let newStatus;
+            
+            // Cycle through statuses: normal → in-progress → completed → normal
+            if (currentStatus === 'normal') {
+                newStatus = 'in-progress';
+                patients[patientIndex].tasks[taskIndex].progressDate = new Date().toLocaleString();
+            } else if (currentStatus === 'in-progress') {
+                newStatus = 'completed';
+                patients[patientIndex].tasks[taskIndex].completedDate = new Date().toLocaleString();
+            } else if (currentStatus === 'completed') {
+                newStatus = 'normal';
+                delete patients[patientIndex].tasks[taskIndex].completedDate;
+                delete patients[patientIndex].tasks[taskIndex].progressDate;
+            }
+            
+            // Update the task priority
+            patients[patientIndex].tasks[taskIndex].priority = newStatus;
+            
+            // Save changes
+            localStorage.setItem('patients', JSON.stringify(patients));
+            
+            // Update the button state
+            updateBloodsButtonState(patientId, taskId, newStatus);
+            
+            // Re-render the patient list to show the updated task
+            renderPatientList();
+        }
+        
+        function updateBloodsButtonState(patientId, taskId, status) {
+            // Find the button element
+            const button = document.querySelector(`.bloods-button[data-patient-id="${patientId}"]`);
+            if (!button) return;
+            
+            // Remove existing status classes
+            button.classList.remove('normal', 'in-progress', 'completed');
+            
+            // Add the new status class
+            button.classList.add(status);
+            
+            // Set the task ID as a data attribute
+            button.setAttribute('data-task-id', taskId);
         }
         
         // Render patient list
@@ -2259,6 +2400,20 @@
             editTaskDescription.value = task.description || '';
             editTaskPriority.value = task.priority;
             
+            // Update modal title for bloods task
+            const modalTitle = document.querySelector('#task-edit-modal h2');
+            if (task.isBloodsTask || task.text.toLowerCase().includes("blood")) {
+                modalTitle.textContent = 'Edit Bloods Task';
+                
+                // Add hint to include specific tests if the description is brief
+                if (!task.description || task.description.length < 50) {
+                    editTaskDescription.placeholder = "Specify which blood tests are required (e.g., FBC, U&Es, LFTs, Coags, etc.)";
+                }
+            } else {
+                modalTitle.textContent = 'Edit Task';
+                editTaskDescription.placeholder = "Add detailed information about this task...";
+            }
+            
             // Show the modal
             taskEditModal.classList.remove('hidden');
         }
@@ -2280,10 +2435,30 @@
                 
                 if (taskIndex === -1) return;
                 
-                // Update task
-                patients[patientIndex].tasks[taskIndex].text = text;
-                patients[patientIndex].tasks[taskIndex].description = description;
-                patients[patientIndex].tasks[taskIndex].priority = priority;
+                const task = patients[patientIndex].tasks[taskIndex];
+                
+                // Update task properties
+                task.text = text;
+                task.description = description;
+                task.priority = priority;
+                
+                // Set or update isBloodsTask property if relevant
+                if (text.toLowerCase().includes("blood")) {
+                    task.isBloodsTask = true;
+                }
+                
+                // If this is a bloods task and the button exists on the patient card, update its state
+                if (task.isBloodsTask) {
+                    const button = document.querySelector(`.bloods-button[data-patient-id="${currentPatientId}"]`);
+                    if (button) {
+                        // Remove existing status classes
+                        button.classList.remove('normal', 'in-progress', 'completed');
+                        
+                        // Add the new status class
+                        button.classList.add(priority);
+                        button.setAttribute('data-task-id', currentEditingTaskId);
+                    }
+                }
                 
                 localStorage.setItem('patients', JSON.stringify(patients));
                 
@@ -2844,6 +3019,20 @@
             editTaskText.value = task.text;
             editTaskDescription.value = task.description || '';
             editTaskPriority.value = task.priority;
+            
+            // Update modal title for bloods task
+            const modalTitle = document.querySelector('#task-edit-modal h2');
+            if (task.isBloodsTask || task.text.toLowerCase().includes("blood")) {
+                modalTitle.textContent = 'Edit Bloods Task';
+                
+                // Add hint to include specific tests if the description is brief
+                if (!task.description || task.description.length < 50) {
+                    editTaskDescription.placeholder = "Specify which blood tests are required (e.g., FBC, U&Es, LFTs, Coags, etc.)";
+                }
+            } else {
+                modalTitle.textContent = 'Edit Task';
+                editTaskDescription.placeholder = "Add detailed information about this task...";
+            }
             
             // Show the modal
             taskEditModal.classList.remove('hidden');

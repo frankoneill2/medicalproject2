@@ -260,6 +260,7 @@ h3 {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
+  position: relative;
 }
 
 .patient-name {
@@ -579,6 +580,43 @@ h3 {
 .task-indicators {
   display: flex;
   gap: 10px;
+}
+
+.bloods-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.bloods-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bloods-button.in-progress {
+  background-color: var(--warning-color);
+  border-color: var(--warning-color);
+  color: white;
+}
+
+.bloods-button.completed {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+  color: white;
 }
 
 .task-indicator {
