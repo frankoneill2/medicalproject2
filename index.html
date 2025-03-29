@@ -26,7 +26,10 @@
         <div id="patient-list-view" class="main-view active" role="region" aria-label="Patient list">
             <header>
                 <div class="title-section">
-                    <h1><i class="fas fa-clipboard-list"></i> Ward Round List</h1>
+                    <h1>
+                        <i class="fas fa-clipboard-list"></i> Ward Round List
+                        <span class="version-badge">v1.4</span>
+                    </h1>
                     <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
                         <i class="fas fa-moon" aria-hidden="true"></i>
                     </button>
@@ -55,6 +58,7 @@
                 <div class="header-actions">
                     <div class="task-filter-container">
                         <div class="task-filter-checkbox-group">
+                            <h4>Task Status</h4>
                             <label class="task-filter-label">
                                 <input type="checkbox" value="normal" class="task-filter-checkbox" checked>
                                 <span>Normal</span>
@@ -73,13 +77,26 @@
                             </label>
                         </div>
                         <div class="task-type-filter-container">
+                            <h4>Task Type</h4>
                             <label class="task-type-filter-label">
                                 <input type="checkbox" value="all" class="task-type-filter-checkbox" checked>
                                 <span>All Types</span>
                             </label>
                             <label class="task-type-filter-label">
+                                <input type="checkbox" value="investigation" class="task-type-filter-checkbox">
+                                <span>Investigations</span>
+                            </label>
+                            <label class="task-type-filter-label">
                                 <input type="checkbox" value="bloods" class="task-type-filter-checkbox">
-                                <span>Bloods Only</span>
+                                <span>Bloods</span>
+                            </label>
+                            <label class="task-type-filter-label">
+                                <input type="checkbox" value="imaging" class="task-type-filter-checkbox">
+                                <span>Imaging</span>
+                            </label>
+                            <label class="task-type-filter-label">
+                                <input type="checkbox" value="other" class="task-type-filter-checkbox">
+                                <span>Other</span>
                             </label>
                         </div>
                     </div>
@@ -865,8 +882,11 @@
                     taskItem.innerHTML = `
                         <div class="compact-task-content">
                             <span class="compact-task-text">
+                                ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
                                 ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
                                 ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
                                 ${task.text}
                             </span>
                             <div class="compact-task-actions">
@@ -922,8 +942,11 @@
                         taskItem.innerHTML = `
                             <div class="compact-task-content">
                                 <span class="compact-task-text">
+                                    ${task.tags && task.tags.includes('investigation') ? '<span class="task-tag investigation">Investigation</span>' : ''}
                                     ${task.tags && task.tags.includes('bloods') ? '<span class="task-tag bloods">Bloods</span>' : ''}
                                     ${task.isBloodsTask && (!task.tags || !task.tags.includes('bloods')) ? '<span class="task-tag bloods">Bloods</span>' : ''}
+                                    ${task.tags && task.tags.includes('imaging') ? '<span class="task-tag imaging">Imaging</span>' : ''}
+                                    ${task.tags && task.tags.includes('other') ? '<span class="task-tag other">Other</span>' : ''}
                                     ${task.text}
                                 </span>
                                 <div class="compact-task-actions">
@@ -1142,7 +1165,7 @@
                 date: new Date().toLocaleString(),
                 targetDate: tomorrowStr,
                 isBloodsTask: true,
-                tags: ["bloods"]  // Add tag to identify task type
+                tags: ["investigation", "bloods"]  // Add tags to identify task type and category
             };
             
             // Ensure patient has a tasks array
@@ -2213,11 +2236,38 @@
                     }
                     
                     // Apply task type filter
-                    if (taskTypeFilter === 'bloods') {
-                        // Only include bloods tasks
-                        if (!(task.isBloodsTask || (task.tags && task.tags.includes('bloods')) || 
-                              task.text.toLowerCase().includes('blood'))) {
-                            return;
+                    if (taskTypeFilter !== 'all') {
+                        // Handle investigation (parent category)
+                        if (taskTypeFilter === 'investigation') {
+                            if (!(task.tags && task.tags.includes('investigation'))) {
+                                return;
+                            }
+                        }
+                        // Handle specific investigation types
+                        else if (taskTypeFilter === 'bloods') {
+                            if (!(task.isBloodsTask || (task.tags && task.tags.includes('bloods')) || 
+                                  task.text.toLowerCase().includes('blood'))) {
+                                return;
+                            }
+                        }
+                        else if (taskTypeFilter === 'imaging') {
+                            if (!((task.tags && task.tags.includes('imaging')) || 
+                                 task.text.toLowerCase().includes('xray') || 
+                                 task.text.toLowerCase().includes('x-ray') || 
+                                 task.text.toLowerCase().includes('ultrasound') || 
+                                 task.text.toLowerCase().includes('ct') || 
+                                 task.text.toLowerCase().includes('mri') || 
+                                 task.text.toLowerCase().includes('scan'))) {
+                                return;
+                            }
+                        }
+                        else if (taskTypeFilter === 'other') {
+                            if (!((task.tags && task.tags.includes('other')) || 
+                                 (task.tags && task.tags.includes('investigation') && 
+                                  !task.tags.includes('bloods') && 
+                                  !task.tags.includes('imaging')))) {
+                                return;
+                            }
                         }
                     }
                     
@@ -2521,14 +2571,45 @@
                 task.priority = priority;
                 
                 // Set or update isBloodsTask property if relevant
+                // Handle blood tests
                 if (text.toLowerCase().includes("blood")) {
                     task.isBloodsTask = true;
                     
-                    // Add the bloods tag if missing
+                    // Initialize tags array if it doesn't exist
                     if (!task.tags) {
-                        task.tags = ["bloods"];
-                    } else if (!task.tags.includes("bloods")) {
-                        task.tags.push("bloods");
+                        task.tags = ["investigation", "bloods"];
+                    } else {
+                        // Add investigation tag if missing
+                        if (!task.tags.includes("investigation")) {
+                            task.tags.push("investigation");
+                        }
+                        // Add bloods tag if missing
+                        if (!task.tags.includes("bloods")) {
+                            task.tags.push("bloods");
+                        }
+                    }
+                }
+                
+                // Handle imaging tasks
+                if (text.toLowerCase().includes("xray") || 
+                    text.toLowerCase().includes("x-ray") || 
+                    text.toLowerCase().includes("ultrasound") || 
+                    text.toLowerCase().includes("ct") || 
+                    text.toLowerCase().includes("mri") || 
+                    text.toLowerCase().includes("scan")) {
+                    
+                    // Initialize tags array if it doesn't exist
+                    if (!task.tags) {
+                        task.tags = ["investigation", "imaging"];
+                    } else {
+                        // Add investigation tag if missing
+                        if (!task.tags.includes("investigation")) {
+                            task.tags.push("investigation");
+                        }
+                        // Add imaging tag if missing
+                        if (!task.tags.includes("imaging")) {
+                            task.tags.push("imaging");
+                        }
                     }
                 }
                 
