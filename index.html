@@ -877,6 +877,9 @@
                                 <button class="compact-task-edit-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Edit Task">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
+                                <button class="compact-task-delete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Delete Task">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -926,6 +929,9 @@
                                     }
                                     <button class="compact-task-edit-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Edit Task">
                                         <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button class="compact-task-delete-btn" data-patient-id="${patient.id}" data-task-id="${task.id}" title="Delete Task">
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </div>
                             </div>
@@ -984,6 +990,15 @@
                         const patientId = this.getAttribute('data-patient-id');
                         const taskId = parseInt(this.getAttribute('data-task-id'));
                         showEditTaskModalFromCard(patientId, taskId);
+                    });
+                });
+                
+                patientCard.querySelectorAll('.compact-task-delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const patientId = this.getAttribute('data-patient-id');
+                        const taskId = parseInt(this.getAttribute('data-task-id'));
+                        deleteTaskFromCard(patientId, taskId);
                     });
                 });
                 
@@ -3002,6 +3017,38 @@
             
             // Re-render the patient list
             renderPatientList();
+        }
+        
+        // Function to delete a task from the patient card
+        function deleteTaskFromCard(patientId, taskId) {
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            if (patientIndex === -1) return;
+            
+            // Find the task
+            const task = patients[patientIndex].tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            // Ask for confirmation
+            if (confirm(`Are you sure you want to delete the task "${task.text}"?`)) {
+                // Remove the task from the patient's tasks array
+                patients[patientIndex].tasks = patients[patientIndex].tasks.filter(t => t.id !== taskId);
+                
+                // Save changes
+                localStorage.setItem('patients', JSON.stringify(patients));
+                
+                // If this was a bloods task, update any bloods button associated with this patient
+                if (task.isBloodsTask || task.text.toLowerCase().includes("blood")) {
+                    const button = document.querySelector(`.bloods-button[data-patient-id="${patientId}"][data-task-id="${taskId}"]`);
+                    if (button) {
+                        // Reset the button state
+                        button.classList.remove('normal', 'in-progress', 'completed');
+                        button.removeAttribute('data-task-id');
+                    }
+                }
+                
+                // Re-render the patient list
+                renderPatientList();
+            }
         }
         
         // Function to show the edit task modal from patient card
