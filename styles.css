@@ -1644,6 +1644,22 @@ h3 {
     align-items: flex-start;
   }
   
+  .title-section {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+  }
+  
+  .logo-container {
+    margin-bottom: 5px;
+  }
+  
+  .header-logo {
+    height: 40px;
+    max-width: 180px;
+  }
+  
   .header-actions {
     margin-top: 15px;
     width: 100%;
@@ -2410,7 +2426,19 @@ h3 {
 .title-section {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  height: 50px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
 }
 
 .version-badge {
