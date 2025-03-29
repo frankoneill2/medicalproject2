@@ -1912,28 +1912,29 @@
                     }
                 } 
                 // Auto-detect type from text if no type was selected
-                else if (text.toLowerCase().includes('blood') || 
-                    text.toLowerCase().includes('xray') || 
-                    text.toLowerCase().includes('x-ray') || 
-                    text.toLowerCase().includes('ultrasound') || 
-                    text.toLowerCase().includes('ct') || 
-                    text.toLowerCase().includes('mri') || 
-                    text.toLowerCase().includes('scan')) {
+                else {
+                    // Convert to lowercase for consistent matching
+                    const lowercaseText = text.toLowerCase();
+                    // Use regular expressions with word boundaries for accurate matching
+                    const isBloodTask = /\b(blood|fbc|cbc|hb|hgb|wcc|plt|u&e|lft|lfts|coag|bnp|trop|troponin)\b/.test(lowercaseText);
+                    const isImagingTask = /\b(xray|x-ray|ultrasound|scan|mri|ct scan|cat scan|pet|imaging|radiology)\b/.test(lowercaseText);
                     
-                    // Add investigation tag
-                    if (!newTask.tags.includes('investigation')) {
-                        newTask.tags.push('investigation');
-                    }
-                    
-                    // Add specific tag based on content
-                    if (text.toLowerCase().includes('blood')) {
-                        if (!newTask.tags.includes('bloods')) {
-                            newTask.tags.push('bloods');
+                    if (isBloodTask || isImagingTask) {
+                        // Add investigation tag
+                        if (!newTask.tags.includes('investigation')) {
+                            newTask.tags.push('investigation');
                         }
-                        newTask.isBloodsTask = true;
-                    } else {
-                        if (!newTask.tags.includes('imaging')) {
-                            newTask.tags.push('imaging');
+                        
+                        // Add specific tag based on content
+                        if (isBloodTask) {
+                            if (!newTask.tags.includes('bloods')) {
+                                newTask.tags.push('bloods');
+                            }
+                            newTask.isBloodsTask = true;
+                        } else if (isImagingTask) {
+                            if (!newTask.tags.includes('imaging')) {
+                                newTask.tags.push('imaging');
+                            }
                         }
                     }
                 }
@@ -2332,39 +2333,45 @@
                     
                     // Apply task type filter
                     if (taskTypeFilter !== 'all') {
+                        // Helper functions for accurate word boundary matching
+                        const isBloodRelated = (text) => {
+                            return /\b(blood|fbc|cbc|hb|hgb|wcc|plt|u&e|lft|lfts|coag|bnp|trop|troponin)\b/i.test(text);
+                        };
+                        
+                        const isImagingRelated = (text) => {
+                            return /\b(xray|x-ray|ultrasound|scan|mri|ct scan|cat scan|pet|imaging|radiology)\b/i.test(text);
+                        };
+                        
                         // Handle investigation (parent category)
                         if (taskTypeFilter === 'investigation') {
                             if (!(
+                                // Check tags first
                                 (task.tags && task.tags.includes('investigation')) ||
                                 (task.tags && task.tags.includes('bloods')) ||
                                 (task.isBloodsTask) ||
                                 (task.tags && task.tags.includes('imaging')) ||
-                                task.text.toLowerCase().includes('blood') ||
-                                task.text.toLowerCase().includes('xray') || 
-                                task.text.toLowerCase().includes('x-ray') || 
-                                task.text.toLowerCase().includes('ultrasound') || 
-                                task.text.toLowerCase().includes('ct') || 
-                                task.text.toLowerCase().includes('mri') || 
-                                task.text.toLowerCase().includes('scan')
+                                // Then check text with proper word boundary matching
+                                isBloodRelated(task.text) || 
+                                isImagingRelated(task.text)
                             )) {
                                 return;
                             }
                         }
                         // Handle specific investigation types
                         else if (taskTypeFilter === 'bloods') {
-                            if (!(task.isBloodsTask || (task.tags && task.tags.includes('bloods')) || 
-                                  task.text.toLowerCase().includes('blood'))) {
+                            if (!(
+                                task.isBloodsTask || 
+                                (task.tags && task.tags.includes('bloods')) || 
+                                isBloodRelated(task.text)
+                            )) {
                                 return;
                             }
                         }
                         else if (taskTypeFilter === 'imaging') {
-                            if (!((task.tags && task.tags.includes('imaging')) || 
-                                 task.text.toLowerCase().includes('xray') || 
-                                 task.text.toLowerCase().includes('x-ray') || 
-                                 task.text.toLowerCase().includes('ultrasound') || 
-                                 task.text.toLowerCase().includes('ct') || 
-                                 task.text.toLowerCase().includes('mri') || 
-                                 task.text.toLowerCase().includes('scan'))) {
+                            if (!(
+                                (task.tags && task.tags.includes('imaging')) || 
+                                isImagingRelated(task.text)
+                            )) {
                                 return;
                             }
                         }
@@ -2740,34 +2747,35 @@
                     task.isBloodsTask = false;
                 }
                 
-                // Auto-detect if no type was selected but text suggests a specific type
-                if (taskType === 'none' && text.toLowerCase().includes("blood")) {
-                    task.isBloodsTask = true;
+                // Auto-detect task type if no type was explicitly selected
+                if (taskType === 'none') {
+                    // Convert to lowercase for consistent matching
+                    const lowercaseText = text.toLowerCase();
                     
-                    // Only auto-tag if no type was explicitly selected
-                    if (!task.tags.includes("investigation")) {
-                        task.tags.push("investigation");
-                    }
-                    if (!task.tags.includes("bloods")) {
-                        task.tags.push("bloods");
-                    }
-                }
-                
-                // Auto-detect imaging if no type was selected
-                if (taskType === 'none' && (
-                    text.toLowerCase().includes("xray") || 
-                    text.toLowerCase().includes("x-ray") || 
-                    text.toLowerCase().includes("ultrasound") || 
-                    text.toLowerCase().includes("ct") || 
-                    text.toLowerCase().includes("mri") || 
-                    text.toLowerCase().includes("scan"))) {
+                    // Use regular expressions with word boundaries for accurate matching
+                    const isBloodTask = /\b(blood|fbc|cbc|hb|hgb|wcc|plt|u&e|lft|lfts|coag|bnp|trop|troponin)\b/.test(lowercaseText);
+                    const isImagingTask = /\b(xray|x-ray|ultrasound|scan|mri|ct scan|cat scan|pet|imaging|radiology)\b/.test(lowercaseText);
                     
-                    // Only auto-tag if no type was explicitly selected
-                    if (!task.tags.includes("investigation")) {
-                        task.tags.push("investigation");
+                    // Handle blood tasks
+                    if (isBloodTask) {
+                        task.isBloodsTask = true;
+                        
+                        if (!task.tags.includes("investigation")) {
+                            task.tags.push("investigation");
+                        }
+                        if (!task.tags.includes("bloods")) {
+                            task.tags.push("bloods");
+                        }
                     }
-                    if (!task.tags.includes("imaging")) {
-                        task.tags.push("imaging");
+                    
+                    // Handle imaging tasks
+                    if (isImagingTask) {
+                        if (!task.tags.includes("investigation")) {
+                            task.tags.push("investigation");
+                        }
+                        if (!task.tags.includes("imaging")) {
+                            task.tags.push("imaging");
+                        }
                     }
                 }
                 
@@ -3370,28 +3378,30 @@
                 }
             } 
             // Auto-detect type from text if no type was selected
-            else if (taskText.toLowerCase().includes('blood') || 
-                taskText.toLowerCase().includes('xray') || 
-                taskText.toLowerCase().includes('x-ray') || 
-                taskText.toLowerCase().includes('ultrasound') || 
-                taskText.toLowerCase().includes('ct') || 
-                taskText.toLowerCase().includes('mri') || 
-                taskText.toLowerCase().includes('scan')) {
+            else {
+                // Convert to lowercase for consistent matching
+                const lowercaseText = taskText.toLowerCase();
                 
-                // Add investigation tag
-                if (!newTask.tags.includes('investigation')) {
-                    newTask.tags.push('investigation');
-                }
+                // Use regular expressions with word boundaries for accurate matching
+                const isBloodTask = /\b(blood|fbc|cbc|hb|hgb|wcc|plt|u&e|lft|lfts|coag|bnp|trop|troponin)\b/.test(lowercaseText);
+                const isImagingTask = /\b(xray|x-ray|ultrasound|scan|mri|ct scan|cat scan|pet|imaging|radiology)\b/.test(lowercaseText);
                 
-                // Add specific tag based on content
-                if (taskText.toLowerCase().includes('blood')) {
-                    if (!newTask.tags.includes('bloods')) {
-                        newTask.tags.push('bloods');
+                if (isBloodTask || isImagingTask) {
+                    // Add investigation tag
+                    if (!newTask.tags.includes('investigation')) {
+                        newTask.tags.push('investigation');
                     }
-                    newTask.isBloodsTask = true;
-                } else {
-                    if (!newTask.tags.includes('imaging')) {
-                        newTask.tags.push('imaging');
+                    
+                    // Add specific tag based on content
+                    if (isBloodTask) {
+                        if (!newTask.tags.includes('bloods')) {
+                            newTask.tags.push('bloods');
+                        }
+                        newTask.isBloodsTask = true;
+                    } else if (isImagingTask) {
+                        if (!newTask.tags.includes('imaging')) {
+                            newTask.tags.push('imaging');
+                        }
                     }
                 }
             }
