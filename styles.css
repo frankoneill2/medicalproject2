@@ -1652,29 +1652,7 @@ h3 {
     align-items: flex-start;
   }
   
-  .title-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    align-items: center;
-    width: 100%;
-    padding: 0 5px;
-  }
-  
-  .header-left {
-    grid-column: 1;
-    justify-self: start;
-  }
-  
-  .header-center {
-    grid-column: 2;
-    justify-self: center;
-    text-align: center;
-  }
-  
-  .header-right {
-    grid-column: 3;
-    justify-self: end;
-  }
+  /* Mobile table styles are inherited from desktop */
   
   .modern-btn {
     margin: 0;
@@ -2485,30 +2463,27 @@ h3 {
 }
 
 /* Title section with theme toggle */
-.title-section {
-  display: flex;
-  align-items: center;
+.header-table {
   width: 100%;
-  justify-content: space-between;
+  border-collapse: collapse;
 }
 
 .header-left {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
+  width: 25%;
+  text-align: left;
+  vertical-align: middle;
 }
 
 .header-center {
-  flex: 2;
-  display: flex;
-  justify-content: center;
+  width: 50%;
   text-align: center;
+  vertical-align: middle;
 }
 
 .header-right {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
+  width: 25%;
+  text-align: right;
+  vertical-align: middle;
 }
 
 .logo-container {
